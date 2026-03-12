@@ -1,9 +1,19 @@
-# -*- coding: utf-8 -*-
+# lib/questionnaires/karasek/__init__.py
 """
-questionnaires/karasek/__init__.py
-Expose la classe principale du module Karasek.
+Karasek Questionnaire Module.
+Implements the Karasek job strain model analysis.
 """
 
+from .config import KarasekConfig
 from .questionnaire import KarasekQuestionnaire
+from .analytics import KarasekAnalytics
+from .visualization import KarasekVisualizer
+from .reporting import KarasekReporting
 
-__all__ = ["KarasekQuestionnaire"]
+__all__ = [
+    "KarasekConfig",
+    "KarasekQuestionnaire",
+    "KarasekAnalytics",
+    "KarasekVisualizer",
+    "KarasekReporting",
+]

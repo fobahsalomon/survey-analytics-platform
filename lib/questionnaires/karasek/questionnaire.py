@@ -1,187 +1,123 @@
-# -*- coding: utf-8 -*-
-"""
-questionnaire.py — Classe principale du module Karasek
-Respecte STRICTEMENT l'interface définie par BaseQuestionnaire.
-"""
-
-import logging
-
+# lib/questionnaires/karasek/questionnaire.py
 import pandas as pd
-
-from common.base_questionnaire import BaseQuestionnaire
-from . import analytics
-from . import reporting
+import numpy as np
+from pathlib import Path
+from lib.common.base_questionnaire import BaseQuestionnaire
+from lib.common.common_cleaning import CommonCleaner
+from lib.common.file_utils import FileUtils
+from .config import KarasekConfig
+import logging
 
 logger = logging.getLogger(__name__)
 
-
 class KarasekQuestionnaire(BaseQuestionnaire):
-    """
-    Analyse complète du questionnaire Karasek (RPS).
+    def __init__(self):
+        super().__init__(KarasekConfig())
+        self.cleaner = CommonCleaner()
 
-    Paramètres
-    ----------
-    df : pd.DataFrame
-        Données brutes chargées depuis le CSV.
-    company_name : str, optional
-        Nom de l'entreprise affiché dans les titres des graphiques
-        et les rapports. Défaut : "Entreprise".
+    def load_data(self, file_path: str) -> pd.DataFrame:
+        return FileUtils.load_csv_robust(file_path)
 
-    Exemple d'utilisation
-    ---------------------
-    >>> import pandas as pd
-    >>> from questionnaires.karasek.questionnaire import KarasekQuestionnaire
-    >>>
-    >>> df = pd.read_csv("data/Karasek_Wave-CI.csv", sep=None, engine="python")
-    >>> q = KarasekQuestionnaire(df, company_name="Wave-CI")
-    >>> q.run_full_analysis("results/karasek")
-    """
+    def clean(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        # 1. Renommage
+        mapping = {k: v for k, v in self.config.RENAME_MAPPING.items() if k in df.columns}
+        if mapping:
+            df = df.rename(columns=mapping)
+        
+        # 2. Nettoyage Likert (Colonnes commençant par Q)
+        likert_cols = [c for c in df.columns if c.startswith("Q") and "_" in c]
+        for col in likert_cols:
+            df[col] = self.cleaner.clean_likert(df[col])
+            
+        # 3. Inversion
+        df = self.cleaner.invert_items(df, self.config.INVERT_ITEMS)
+        
+        return df
 
-    def __init__(self, df: pd.DataFrame, company_name: str = "Entreprise"):
-        super().__init__(df)
+    def score(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        
+        # Fonction interne pour calculer les scores de groupe
+        def compute_group_score(suffix: str, multiplier: int = 1, normalize: bool = True):
+            cols = [c for c in df.columns if c.endswith(f"_{suffix}")]
+            if not cols: return pd.Series(np.nan, index=df.index, name=f"{suffix}_score")
+            
+            ssum = df[cols].sum(axis=1, skipna=True)
+            n_answered = df[cols].notna().sum(axis=1)
+            n_items = len(cols)
+            
+            with np.errstate(invalid='ignore', divide='ignore'):
+                score = (ssum / n_answered.replace(0, np.nan) * n_items * multiplier) if normalize else ssum * multiplier
+            
+            return score.where(n_answered > 0, np.nan)
 
-        # ── Option entreprise ─────────────────────────────────────────
-        self.company_name: str = company_name
+        # 1. Scores Karasek de base
+        for group, mult in self.config.SCORE_MULTIPLIERS.items():
+            df[f"{group}_score"] = compute_group_score(group, multiplier=mult, normalize=True)
+        
+        # 2. Scores Composites (Dem, Lat, SS)
+        for name, comps in self.config.KARASEK_SCORE_COMPOSITION.items():
+            existing = [c for c in comps if c in df.columns]
+            df[name] = sum(df[c] for c in existing) if existing else np.nan
+            
+        # 3. Scores RH
+        for group in self.config.RH_SCORE_GROUPS:
+            df[f"{group}_score"] = compute_group_score(group, multiplier=1, normalize=True)
+            
+        return df
 
-        # ── Attributs de résultats ────────────────────────────────────
-        self.scores_df:    pd.DataFrame | None = None
-        self.descriptives: pd.DataFrame | None = None
-        self.prevalences:  pd.DataFrame | None = None
-        self.crosstabs:    dict         | None = None
-        self.metrics:      dict                = {}
-
-    # ------------------------------------------------------------------
-    # INTERFACE PUBLIQUE OBLIGATOIRE
-    # ------------------------------------------------------------------
-
-    def clean_data(self) -> None:
+    def classify(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Étape 1 — Nettoyage et enrichissement.
-        - Appelle clean_common_variables() de BaseQuestionnaire
-        (nettoyage des variables communes à tous les questionnaires)
-        - Puis pipeline Karasek : renommage Likert, socio-dem, inversion
+        Classification UNIQUEMENT par seuils théoriques.
+        Suppression de la logique 'internal' pour ce projet portfolio.
         """
-        self.clean_common_variables()                        # BaseQuestionnaire
-        self.cleaned_df = analytics.clean_data(self.raw_df) # pipeline Karasek
-        logger.info(
-            f"[Karasek – {self.company_name}] "
-            f"clean_data OK — {self.cleaned_df.shape[0]} lignes, "
-            f"{self.cleaned_df.shape[1]} colonnes"
+        df = df.copy()
+        th = self.config.THRESHOLDS
+        
+        dem_th = th.get("Dem_score", 22.5)
+        lat_th = th.get("Lat_score", 60.0)
+        ss_th  = th.get("SS_score", 20.0)
+        
+        # Quadrants
+        conditions = [
+            (df["Lat_score"] >= lat_th) & (df["Dem_score"] >= dem_th), # Actif
+            (df["Lat_score"] >= lat_th) & (df["Dem_score"] <  dem_th), # Détendu
+            (df["Lat_score"] <  lat_th) & (df["Dem_score"] >= dem_th), # Tendu
+        ]
+        choices = ["Actif", "Détendu", "Tendu"]
+        df["Karasek_quadrant"] = np.select(conditions, choices, default="Passif")
+        
+        # Job Strain
+        df["Job_strain"] = np.where(
+            (df["Dem_score"] >= dem_th) & (df["Lat_score"] < lat_th), 
+            "Présent", "Absent"
         )
-
-        # Suppression des lignes avec NA sur les items Likert
-        likert_cols = [c for c in self.cleaned_df.columns
-                    if c.startswith("Q") and "_" in c]
-        if likert_cols:
-            before = len(self.cleaned_df)
-            self.cleaned_df = self.cleaned_df.dropna(subset=likert_cols)
-            dropped = before - len(self.cleaned_df)
-            if dropped:
-                logger.info(f"Lignes supprimées (NA Likert) : {dropped}")
-
-        self.metrics["rows_initial"] = len(self.raw_df)
-        self.metrics["rows_final"]   = len(self.cleaned_df)
-
-    def compute_scores(self) -> None:
-        """
-        Étape 2 — Calcul de tous les scores Karasek et RH
-        + classification par médianes + catégorisation quantiles.
-        """
-        if self.cleaned_df is None:
-            raise RuntimeError("Appelez clean_data() avant compute_scores().")
-
-        self.scores_df = analytics.compute_scores(self.cleaned_df)
-
-        # Récupération des seuils stockés dans les attrs du DataFrame
-        self.metrics["thresholds"] = self.scores_df.attrs.get("thresholds", {})
-
-        logger.info(
-            f"[Karasek – {self.company_name}] "
-            f"compute_scores OK — {self.scores_df.shape[1]} colonnes au total"
+        
+        # Iso Strain
+        df["Iso_strain"] = np.where(
+            (df["Dem_score"] >= dem_th) & (df["SS_score"] < ss_th), 
+            "Présent", "Absent"
         )
+        
+        # Catégorisation binaire des scores (Faible / Élevé)
+        for col, threshold in th.items():
+            if col in df.columns:
+                cat_col = f"{col}_cat"
+                df[cat_col] = np.where(
+                    df[col].isna(), "Non renseigné",
+                    np.where(df[col] <= threshold, "Faible", "Élevé")
+                )
+                
+        return df
 
-    def compute_statistics(self) -> None:
-        """
-        Étape 3 — Statistiques descriptives + prévalences RPS.
-        Remplit self.descriptives et self.prevalences.
-        """
-        if self.scores_df is None:
-            raise RuntimeError("Appelez compute_scores() avant compute_statistics().")
+    def analyze(self, df: pd.DataFrame) -> dict:
+        # Délègue à la classe Analytics pour garder questionnaire.py propre
+        from .analytics import KarasekAnalytics
+        analyzer = KarasekAnalytics(self.config)
+        return analyzer.compute_metrics(df)
 
-        self.descriptives = analytics.compute_descriptives(self.scores_df)
-        self.prevalences  = analytics.compute_prevalences(self.scores_df)
-
-        logger.info(
-            f"[Karasek – {self.company_name}] "
-            f"compute_statistics OK — {len(self.descriptives)} scores décrits"
-        )
-
-    def generate_crosstabs(self) -> None:
-        """
-        Étape 4 — Tableaux croisés définis dans config.ALL_CROSSTABS.
-        Remplit self.crosstabs (dict clé → DataFrame).
-        """
-        if self.cleaned_df is None or self.scores_df is None:
-            raise RuntimeError(
-                "Appelez clean_data() et compute_scores() avant generate_crosstabs()."
-            )
-
-        self.crosstabs = analytics.generate_crosstabs(
-            self.cleaned_df, self.scores_df
-        )
-        logger.info(
-            f"[Karasek – {self.company_name}] "
-            f"generate_crosstabs OK — {len(self.crosstabs)} tableaux"
-        )
-
-    def export_excel(self, output_path: str) -> None:
-        """Étape 5 — Export Excel structuré dans output_path/."""
-        reporting.export_excel(self, output_path)
-
-    def export_figures(self, output_path: str) -> None:
-        """Étape 6 — Export de toutes les figures dans output_path/figures/."""
-        reporting.export_figures(self, output_path)
-
-    def export_word(self, output_path: str) -> None:
-        """Étape 7 — Export du rapport Word dans output_path/."""
-        reporting.export_word(self, output_path)
-
-    def run_full_analysis(self, output_path: str) -> None:
-        """
-        Lance le pipeline complet dans l'ordre obligatoire.
-
-        Paramètres
-        ----------
-        output_path : str
-            Dossier de destination des résultats.
-            Exemple : "results/karasek"
-        """
-        print(f"\n{'='*60}")
-        print(f"  Analyse Karasek — {self.company_name}")
-        print(f"{'='*60}")
-
-        print("  [1/7] Nettoyage des données...")
-        self.clean_data()
-
-        print("  [2/7] Calcul des scores...")
-        self.compute_scores()
-
-        print("  [3/7] Statistiques descriptives...")
-        self.compute_statistics()
-
-        print("  [4/7] Tableaux croisés...")
-        self.generate_crosstabs()
-
-        print("  [5/7] Export Excel...")
-        self.export_excel(output_path)
-
-        print("  [6/7] Export figures...")
-        self.export_figures(output_path)
-
-        print("  [7/7] Export Word...")
-        self.export_word(output_path)
-
-        print(f"\n✅ Analyse terminée — résultats dans : {output_path}")
-        print(f"   Lignes : {self.metrics.get('rows_final', '?')} / "
-            f"{self.metrics.get('rows_initial', '?')}")
-        print(f"{'='*60}\n")
+    def generate_report(self, df: pd.DataFrame, metrics: dict, output_dir: str) -> str:
+        from .reporting import KarasekReporting
+        reporter = KarasekReporting(self.config)
+        return reporter.generate_word_report(df, metrics, output_dir)
