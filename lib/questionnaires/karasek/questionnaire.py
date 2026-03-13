@@ -82,10 +82,10 @@ class KarasekQuestionnaire(BaseQuestionnaire):
         # Quadrants
         conditions = [
             (df["Lat_score"] >= lat_th) & (df["Dem_score"] >= dem_th), # Actif
-            (df["Lat_score"] >= lat_th) & (df["Dem_score"] <  dem_th), # Détendu
+            (df["Lat_score"] >= lat_th) & (df["Dem_score"] <  dem_th), # Detendu
             (df["Lat_score"] <  lat_th) & (df["Dem_score"] >= dem_th), # Tendu
         ]
-        choices = ["Actif", "Détendu", "Tendu"]
+        choices = ["Actif", "Detendu", "Tendu"]
         df["Karasek_quadrant"] = np.select(conditions, choices, default="Passif")
         
         # Job Strain
@@ -117,7 +117,19 @@ class KarasekQuestionnaire(BaseQuestionnaire):
         analyzer = KarasekAnalytics(self.config)
         return analyzer.compute_metrics(df)
 
+    # def generate_report(self, df: pd.DataFrame, metrics: dict, output_dir: str) -> str:
+    #     from .reporting import KarasekReporting
+    #     reporter = KarasekReporting(self.config)
+    #     return reporter.generate_word_report(df, metrics, output_dir)
+
     def generate_report(self, df: pd.DataFrame, metrics: dict, output_dir: str) -> str:
-        from .reporting import KarasekReporting
-        reporter = KarasekReporting(self.config)
-        return reporter.generate_word_report(df, metrics, output_dir)
+            from .reporting import KarasekReporting
+            from .visualization import KarasekVisualizer
+            
+            # 1. Générer les graphiques d'abord
+            visualizer = KarasekVisualizer(self.config)
+            figures = visualizer.generate_all_plots(df)
+            
+            # 2. Générer le rapport Word (avec chemins des figures)
+            reporter = KarasekReporting(self.config)
+            return reporter.generate_word_report(df, metrics, output_dir, figures)
