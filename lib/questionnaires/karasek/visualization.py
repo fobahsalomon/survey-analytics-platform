@@ -27,7 +27,7 @@ def _sort_modalities(series: pd.Series, col_name: str, modality_order: Dict) -> 
 class KarasekVisualizer:
     """
     Générateur de graphiques pour le rapport Karasek.
-    Utilise UNIQUEMENT les seuils théoriques (*_theoretical).
+    Utilise UNIQUEMENT les seuils théoriques.
     """
     
     TITLE_SIZE   = 15

@@ -25,7 +25,7 @@ class KarasekConfig:
         "Je re\u00e7ois des ordres contradictoires de la part d\u2019autres personnes":    "Q5_dem",
         "Mon travail n\u00e9cessite de longues p\u00e9riodes de concentration intense":    "Q6_dem",
         "Mes t\u00e2ches sont souvent interrompues avant d\u2019\u00eatre achev\u00e9es, n\u00e9cessitant de les reprendre plus tard": "Q7_dem",
-        "Mon travail est \u00ab\u00a0tr\u00e8s bouscu l\u00e9\u00a0\u00bb ":              "Q8_dem",
+        "Mon travail est \u00ab\u00a0tr\u00e8s bouscul\u00e9\u00a0\u00bb ":              "Q8_dem",
         "Attendre le travail de coll\u00e8gues ralentit souvent mon propre travail":        "Q9_dem",
         "Mon sup\u00e9rieur se sent concern\u00e9 par le bien-\u00eatre de ses subordonn\u00e9s": "Q1_sup",
         "Mon sup\u00e9rieur pr\u00eate attention \u00e0 ce que je dis":                    "Q2_sup",
@@ -48,9 +48,9 @@ class KarasekConfig:
         "Je recommanderai ma compagnie à mes connaissances à la recherche d'un emploi":     "Q2_cult",
         "Je suis satisfait de mon travail dans la compagnie":                               "Q1_sat",
         "Je sais ce que je dois faire pour atteindre les objectifs qui me sont fix\u00e9s": "Q1_adq_resources",
-        "Je dispose de toutes les ressources n\u00e9cessaires \u00e0 l\u2019accomplissement de mes taches quotidiennes": "Q2_adq_resources",
+        "Je dispose de toutes les ressources nécessaires à l'accomplissement de mes taches quotidiennes": "Q2_adq_resources",
         "Mes besoins de formations sont bien pris en compte":                               "Q1_adq_role",
-        "Les formations dispens\u00e9es sont coh\u00e9rentes avec les taches dont j\u2019ai la responsabilit\u00e9 ou qui me sont assign\u00e9es": "Q2_adq_role",
+        "Les formations dispensées sont cohérentes avec les taches dont j'ai la responsabilité ou qui me sont assignées": "Q2_adq_role",
     }
 
     # --- Items à inverser ---

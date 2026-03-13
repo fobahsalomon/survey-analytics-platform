@@ -1,4 +1,3 @@
-# lib/questionnaires/karasek/__init__.py
 """
 Karasek Questionnaire Module.
 Implements the Karasek job strain model analysis.

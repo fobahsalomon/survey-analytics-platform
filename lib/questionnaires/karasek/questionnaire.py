@@ -1,4 +1,3 @@
-# lib/questionnaires/karasek/questionnaire.py
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -116,11 +115,6 @@ class KarasekQuestionnaire(BaseQuestionnaire):
         from .analytics import KarasekAnalytics
         analyzer = KarasekAnalytics(self.config)
         return analyzer.compute_metrics(df)
-
-    # def generate_report(self, df: pd.DataFrame, metrics: dict, output_dir: str) -> str:
-    #     from .reporting import KarasekReporting
-    #     reporter = KarasekReporting(self.config)
-    #     return reporter.generate_word_report(df, metrics, output_dir)
 
     def generate_report(self, df: pd.DataFrame, metrics: dict, output_dir: str) -> str:
             from .reporting import KarasekReporting
