@@ -11,7 +11,7 @@ def main():
     # 2. Exécution
     # Assure-toi d'avoir un fichier CSV de test dans data/
     results = kq.run_pipeline(
-        input_file="lib/data/sample_karasek.csv", 
+        input_file="backend/lib/data/sample_karasek.csv", 
         output_dir="reports/karasek"
     )
     

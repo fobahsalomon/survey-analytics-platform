@@ -36,15 +36,22 @@ app = FastAPI(
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CORS
+# CORS - CONFIGURATION CRITIQUE 
 # ─────────────────────────────────────────────────────────────────────────────
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=config.CORS_ORIGINS,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",  # ← Ton port actuel !
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://localhost:5173",  # Vite par défaut
+        "*",  # ← Pour le dev uniquement, retirer en prod
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # GET, POST, PUT, DELETE, etc.
+    allow_headers=["*"],  # Tous les headers
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -52,10 +59,6 @@ app.add_middleware(
 # ─────────────────────────────────────────────────────────────────────────────
 
 app.include_router(router)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ROOT ENDPOINT
-# ─────────────────────────────────────────────────────────────────────────────
 
 @app.get("/")
 async def root():
@@ -65,6 +68,9 @@ async def root():
         "docs": "/docs",
         "health": "/api/health",
     }
+
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # POINT D'ENTRÉE

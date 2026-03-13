@@ -1,7 +1,0 @@
-2026-03-13 16:05:37 - questionnaire_api - INFO - Démarrage de l'API Questionnaire Analytics...
-2026-03-13 16:05:37 - questionnaire_api - INFO -  Upload Dir: /home/fobah-salomon/OneDrive/workspace/GitHub/survey-analytics-platform/backend/app/uploads
-2026-03-13 16:05:37 - questionnaire_api - INFO -  Reports Dir: /home/fobah-salomon/OneDrive/workspace/GitHub/survey-analytics-platform/backend/app/reports
-2026-03-13 16:08:31 - questionnaire_api - INFO - Requête analyse reçue: karasek | Fichier: sample_karasek.csv
-2026-03-13 16:08:31 - questionnaire_api - INFO - Fichier uploadé: sample_karasek.csv (164120 bytes)
-2026-03-13 16:08:31 - questionnaire_api - INFO - Démarrage analyse karasek | Session: f8ebf1de
-2026-03-13 16:09:34 - questionnaire_api - INFO - Analyse terminée | Lignes: 700 | Session: f8ebf1de
