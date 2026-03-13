@@ -1,4 +1,3 @@
-# lib/questionnaires/karasek/config.py
 from typing import Dict, List
 
 class KarasekConfig:
@@ -70,26 +69,40 @@ class KarasekConfig:
     RH_SCORE_GROUPS: List[str] = ["rec", "equ", "cult", "adq_resources", "adq_role", "sat"]
 
     # --- SEUILS THÉORIQUES (UNIQUEMENT) ---
-    # Basés sur le point médian de l'échelle (2.5 * n_items * multiplier)
+    # Basés sur le point médian de l'échelle (2.5 * n_items * multiplier
     THRESHOLDS: Dict[str, float] = {
-        "Dem_score": 22.5,   # 9 items * 2.5
-        "Lat_score": 60.0,   # (6*2 + 3*4) * 2.5 normalisé
-        "SS_score":  20.0,   # (4 + 4) * 2.5
+        # Karasek Core
+        "Dem_score": 22.5,
+        "Lat_score": 60.0,
+        "SS_score":  20.0,
         "comp_score": 30.0,
         "auto_score": 30.0,
         "sup_score":  10.0,
         "col_score":  10.0,
-        "rec_score":  15.0,
-        "equ_score":   2.5,
-        "cult_score":  5.0,
-        "sat_score":   2.5,
+        
+        # RH Scores
+        "rec_score":           15.0,
+        "equ_score":            2.5,
+        "cult_score":           5.0,
+        "sat_score":            2.5,
+        "adq_resources_score":  5.0,
+        "adq_role_score":       5.0,
     }
 
-    # --- Labels pour les graphiques ---
     SCORE_LABELS: Dict[str, str] = {
-        "Dem_score": "Demande psychologique",
-        "Lat_score": "Latitude décisionnelle",
-        "SS_score":  "Soutien social",
+        "Dem_score":           "Demande psychologique",
+        "Lat_score":           "Latitude décisionnelle",
+        "SS_score":            "Soutien social",
+        "comp_score":          "Utilisation des compétences",
+        "auto_score":          "Autonomie décisionnelle",
+        "sup_score":           "Soutien hiérarchique",
+        "col_score":           "Soutien des collègues",
+        "rec_score":           "Reconnaissance",
+        "equ_score":           "Équité de charge",
+        "cult_score":          "Culture organisationnelle",
+        "sat_score":           "Satisfaction au travail",
+        "adq_resources_score": "Adéquation ressources / objectifs",
+        "adq_role_score":      "Adéquation formation / rôle",
     }
     
-    COMPANY_NAME = "Wave-CI" # Ou dynamique via config API
+    COMPANY_NAME = "COMPANY NAME" 

@@ -1,4 +1,3 @@
-# lib/common/__init__.py
 """
 Common utilities shared across all questionnaires.
 """
