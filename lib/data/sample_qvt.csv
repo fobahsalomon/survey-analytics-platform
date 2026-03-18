@@ -1,0 +1,121 @@
+﻿Direction,Categorie Socio,Genre,Age,Anciennete,Situation matrimoniale,Les relations avec mes collègues sont bonnes,Je me sens respecté(e) par mes collègues,Je peux compter sur l'aide de mon manager en cas de difficulté,Les conflits sont gérés de manière constructive,Mon travail a du sens pour moi,J'ai suffisamment d'autonomie dans la réalisation de mes tâches,Mon travail me permet d'utiliser mes compétences,Mon environnement de travail est agréable et fonctionnel,Je dispose des outils nécessaires pour bien travailler,Mon espace de travail me permet de me concentrer,Ma charge de travail est raisonnable,Les priorités sont clairement définies,Les processus et procédures facilitent mon travail,J'ai des perspectives d'évolution dans mon organisation,Les formations proposées correspondent à mes besoins,Je parviens à concilier vie professionnelle et personnelle,Mes horaires de travail me conviennent,Le télétravail / la flexibilité horaire est suffisant(e)
+RH,Agent de maîtrise,Homme,55,8,Pacsé(e),3,4,1,1,4,2,4,4,4,1,5,2,2,2,4,2,1,4
+Opérations,Employé,Femme,57,24,Divorcé(e),4,2,1,5,5,3,1,5,5,5,2,5,3,5,2,2,4,1
+IT,Employé,Homme,30,7,Pacsé(e),4,4,1,5,4,5,5,4,5,3,1,3,2,4,2,5,3,3
+Commercial,Agent de maîtrise,Femme,57,23,Marié(e),5,4,1,2,3,3,2,2,3,2,2,2,4,3,1,5,3,5
+Commercial,Technicien,Femme,26,13,Divorcé(e),4,4,2,1,3,1,5,5,4,3,2,2,1,3,1,3,4,2
+Direction Générale,Employé,Homme,42,6,Pacsé(e),1,1,3,5,2,2,2,3,5,2,3,4,5,5,3,5,5,5
+RH,Cadre,Femme,40,10,Célibataire,3,5,2,5,2,1,4,5,4,5,5,1,5,3,5,2,1,3
+Opérations,Technicien,Homme,34,15,Pacsé(e),2,5,2,1,4,5,3,1,2,5,3,3,3,2,2,4,3,2
+Finance,Employé,Femme,22,22,Divorcé(e),1,5,3,4,1,2,1,1,1,1,1,2,3,1,3,2,4,2
+RH,Employé,Homme,52,18,Divorcé(e),1,5,3,2,1,2,1,1,1,4,2,1,4,2,5,2,5,3
+IT,Employé,Homme,35,27,Divorcé(e),3,5,2,4,2,1,4,5,5,2,4,2,1,4,4,2,4,4
+Direction Générale,Employé,Homme,48,26,Célibataire,5,4,2,3,4,3,1,1,3,1,2,3,4,3,1,3,4,5
+Opérations,Cadre,Homme,38,22,Divorcé(e),3,1,3,1,4,5,2,5,2,5,3,4,2,3,3,2,5,1
+Opérations,Employé,Homme,36,18,Célibataire,3,3,1,2,3,3,3,4,2,1,4,1,4,3,1,2,5,5
+Opérations,Technicien,Femme,57,8,Pacsé(e),1,2,3,3,3,4,2,1,2,2,2,5,2,5,2,2,4,3
+Opérations,Agent de maîtrise,Homme,25,12,Pacsé(e),4,2,5,4,1,1,1,5,5,1,4,5,4,5,2,1,2,1
+IT,Employé,Femme,51,3,Marié(e),1,5,2,1,2,1,4,1,4,3,2,4,4,1,4,5,3,5
+RH,Cadre,Homme,51,11,Célibataire,5,5,1,5,1,4,4,1,5,3,1,5,2,1,1,2,4,2
+Direction Générale,Agent de maîtrise,Homme,37,27,Marié(e),5,3,4,4,4,1,4,3,2,2,2,3,4,2,2,1,1,4
+Commercial,Agent de maîtrise,Femme,32,12,Marié(e),5,4,1,5,4,3,5,2,3,1,3,5,3,5,2,3,4,4
+IT,Technicien,Femme,22,3,Célibataire,2,1,1,5,2,2,1,2,1,1,1,4,2,3,2,5,3,1
+Commercial,Cadre,Homme,59,19,Célibataire,1,2,1,1,2,1,3,1,5,5,5,3,3,5,4,2,5,2
+Finance,Agent de maîtrise,Homme,59,28,Marié(e),2,5,5,1,2,3,2,4,3,5,3,1,5,4,2,5,2,4
+Direction Générale,Agent de maîtrise,Femme,31,26,Célibataire,4,3,5,4,5,5,5,1,3,5,1,3,1,3,2,4,5,2
+Opérations,Technicien,Femme,23,8,Pacsé(e),2,3,3,1,3,1,3,2,3,3,5,5,5,2,3,4,3,1
+IT,Technicien,Femme,26,13,Marié(e),5,3,4,1,4,5,1,3,2,3,5,5,5,2,4,2,3,1
+Commercial,Cadre,Homme,24,15,Célibataire,1,2,4,3,3,3,4,3,5,4,1,3,3,1,1,1,4,5
+Opérations,Cadre,Homme,55,7,Célibataire,1,5,4,5,4,4,1,4,3,4,1,2,4,3,5,2,3,1
+IT,Technicien,Femme,57,8,Pacsé(e),2,4,3,4,3,1,2,2,4,3,2,4,2,2,5,5,5,1
+Commercial,Cadre,Femme,28,7,Célibataire,4,4,5,3,2,5,4,4,1,2,3,1,1,2,4,4,1,3
+Commercial,Technicien,Homme,51,29,Pacsé(e),4,2,4,1,5,1,3,4,2,3,4,1,3,1,3,4,4,1
+Finance,Agent de maîtrise,Homme,29,22,Célibataire,2,4,1,2,4,5,4,2,5,1,3,3,5,4,4,5,5,4
+RH,Technicien,Homme,36,25,Célibataire,4,5,2,4,4,4,3,2,1,1,4,5,2,5,3,2,2,3
+IT,Agent de maîtrise,Femme,45,24,Célibataire,4,4,5,1,5,2,5,3,1,4,1,2,4,3,2,2,2,4
+Direction Générale,Agent de maîtrise,Homme,50,28,Marié(e),3,3,3,3,2,1,3,3,5,5,4,3,4,3,2,5,3,3
+RH,Employé,Homme,56,3,Pacsé(e),3,2,2,1,1,4,1,1,2,1,5,2,4,5,1,3,4,4
+Direction Générale,Cadre,Homme,23,26,Marié(e),1,3,5,2,3,1,1,3,2,1,3,3,2,3,5,2,5,4
+Opérations,Employé,Femme,29,1,Célibataire,2,2,4,2,2,4,4,1,3,1,3,1,2,4,2,2,4,3
+Finance,Employé,Homme,33,14,Divorcé(e),3,4,3,4,3,4,1,3,1,4,2,3,3,3,2,5,4,1
+IT,Technicien,Homme,34,17,Divorcé(e),1,1,3,5,2,2,2,5,1,2,5,3,5,3,5,1,3,2
+RH,Technicien,Homme,61,10,Pacsé(e),3,1,1,1,2,2,1,3,1,2,1,2,5,3,3,1,4,1
+Opérations,Employé,Homme,53,4,Divorcé(e),1,4,2,4,2,2,2,4,1,1,2,2,3,4,4,4,2,1
+Opérations,Agent de maîtrise,Femme,34,5,Divorcé(e),4,2,3,4,2,2,3,2,1,5,1,4,5,4,2,1,3,2
+Commercial,Agent de maîtrise,Homme,60,24,Célibataire,1,3,5,5,4,1,1,5,4,3,5,1,3,3,2,1,1,2
+RH,Agent de maîtrise,Homme,41,9,Divorcé(e),1,3,2,5,3,2,3,5,2,4,3,1,2,1,4,5,1,1
+Direction Générale,Technicien,Femme,42,9,Célibataire,4,3,1,1,3,4,5,5,1,4,5,1,1,5,3,3,5,2
+Commercial,Agent de maîtrise,Homme,39,27,Célibataire,2,4,3,4,1,2,1,4,1,1,4,5,4,5,1,4,5,3
+Direction Générale,Cadre,Femme,27,4,Pacsé(e),2,2,5,3,3,4,1,4,3,5,3,2,4,1,5,3,3,1
+Opérations,Agent de maîtrise,Femme,59,27,Divorcé(e),2,4,3,1,1,5,2,3,5,3,3,1,5,2,3,1,1,2
+Opérations,Cadre,Homme,22,27,Divorcé(e),2,2,2,2,2,4,5,5,2,4,2,5,4,5,4,1,1,1
+Opérations,Cadre,Femme,28,17,Célibataire,4,2,4,5,3,3,3,5,1,2,3,1,1,2,2,4,1,1
+Finance,Cadre,Homme,31,4,Pacsé(e),4,3,4,3,1,2,4,3,2,5,4,2,3,5,3,1,4,1
+Commercial,Technicien,Femme,33,4,Marié(e),2,5,2,2,2,5,1,1,3,5,5,1,4,4,4,3,2,3
+Commercial,Employé,Homme,27,8,Divorcé(e),4,2,5,2,2,2,4,1,1,3,3,4,3,5,5,2,2,4
+Commercial,Employé,Femme,22,17,Pacsé(e),4,3,3,5,5,3,1,2,5,1,5,4,3,1,2,2,5,4
+RH,Agent de maîtrise,Femme,49,4,Pacsé(e),3,1,1,2,5,3,4,1,4,5,5,4,5,3,4,5,5,4
+IT,Employé,Femme,60,13,Divorcé(e),3,1,3,1,1,4,1,2,2,5,3,2,4,3,5,4,4,4
+RH,Cadre,Homme,26,3,Pacsé(e),5,4,5,3,4,3,5,1,5,3,3,2,4,5,4,4,2,5
+Opérations,Technicien,Homme,33,16,Marié(e),3,4,2,5,4,4,2,5,2,3,1,5,3,2,1,2,3,2
+Opérations,Employé,Homme,42,0,Célibataire,2,2,3,1,2,5,1,1,1,2,2,5,2,2,1,2,2,4
+Direction Générale,Technicien,Homme,59,21,Marié(e),3,4,4,2,3,2,2,4,5,1,5,1,3,1,2,4,5,5
+Opérations,Cadre,Femme,49,1,Pacsé(e),5,2,4,3,4,5,1,2,5,5,1,4,5,4,1,1,1,3
+Commercial,Agent de maîtrise,Homme,52,5,Marié(e),4,2,5,1,2,1,1,1,2,3,2,5,4,5,4,2,4,5
+Direction Générale,Employé,Femme,45,5,Marié(e),1,3,1,4,1,5,3,4,3,2,4,3,4,1,5,4,3,1
+Commercial,Agent de maîtrise,Femme,38,24,Pacsé(e),3,2,3,2,2,1,2,5,1,4,2,4,1,2,3,4,4,5
+Finance,Agent de maîtrise,Homme,29,1,Pacsé(e),4,5,3,1,2,5,2,4,4,1,5,1,5,2,3,1,3,3
+Direction Générale,Cadre,Homme,56,12,Pacsé(e),2,3,1,2,2,2,5,5,4,1,4,1,2,5,4,4,1,2
+Commercial,Agent de maîtrise,Femme,54,17,Divorcé(e),5,2,4,5,2,5,1,3,4,2,1,1,5,3,3,3,4,1
+RH,Cadre,Homme,23,15,Divorcé(e),5,3,1,5,1,1,2,4,3,3,2,1,3,2,3,2,4,4
+Commercial,Agent de maîtrise,Homme,50,20,Marié(e),5,4,3,3,5,3,1,1,4,2,4,5,5,2,3,4,3,3
+Opérations,Employé,Femme,25,24,Divorcé(e),1,2,2,3,1,5,3,5,3,1,5,4,5,3,2,5,2,2
+Finance,Employé,Femme,51,11,Pacsé(e),3,5,1,5,4,1,2,4,5,2,5,4,4,2,1,3,2,2
+Commercial,Employé,Homme,55,24,Pacsé(e),3,3,5,1,4,2,1,2,1,2,5,2,5,1,3,2,3,5
+RH,Agent de maîtrise,Homme,27,9,Marié(e),4,4,2,4,4,1,1,2,3,3,1,5,4,5,5,2,2,3
+Opérations,Technicien,Homme,39,29,Pacsé(e),5,5,2,4,5,2,5,4,3,3,4,1,5,3,1,3,2,1
+Commercial,Cadre,Femme,26,15,Pacsé(e),2,3,5,4,1,2,1,1,3,5,1,5,1,2,2,1,2,2
+Finance,Agent de maîtrise,Femme,44,22,Pacsé(e),3,1,5,2,2,4,4,5,1,5,1,1,1,4,2,3,1,1
+Finance,Cadre,Femme,59,26,Marié(e),4,4,1,4,1,2,5,2,2,2,4,1,3,4,5,1,5,4
+IT,Agent de maîtrise,Femme,25,23,Pacsé(e),4,1,2,4,3,1,3,1,5,5,3,1,5,1,3,1,2,5
+Opérations,Technicien,Femme,37,25,Divorcé(e),4,3,4,5,4,1,2,2,1,3,4,4,4,1,3,3,1,5
+Direction Générale,Agent de maîtrise,Homme,60,16,Pacsé(e),2,5,4,1,5,5,4,5,4,1,5,2,3,1,4,4,1,4
+Commercial,Technicien,Homme,34,1,Marié(e),5,3,5,4,2,5,5,2,4,2,1,3,3,4,2,5,5,4
+RH,Agent de maîtrise,Femme,27,14,Divorcé(e),1,4,3,5,2,2,1,3,3,4,3,3,4,4,4,1,3,3
+Opérations,Employé,Femme,41,5,Divorcé(e),3,3,1,2,5,1,5,5,1,5,5,4,5,4,1,2,2,4
+IT,Agent de maîtrise,Femme,42,26,Marié(e),4,2,5,4,4,1,5,1,1,2,3,2,5,4,1,3,3,1
+Opérations,Agent de maîtrise,Homme,48,7,Divorcé(e),1,2,1,1,4,5,1,4,2,1,3,1,1,3,5,3,1,3
+RH,Technicien,Homme,34,6,Célibataire,3,3,1,4,3,4,1,2,1,1,3,2,3,3,4,5,2,3
+Finance,Technicien,Homme,60,7,Pacsé(e),3,1,4,4,3,4,4,4,1,1,5,2,2,4,1,4,2,1
+Opérations,Agent de maîtrise,Homme,42,19,Célibataire,4,3,4,1,2,2,1,1,1,4,1,4,4,2,3,3,5,3
+Opérations,Technicien,Femme,33,17,Divorcé(e),1,3,1,1,4,4,4,1,1,3,5,4,3,5,1,1,1,4
+Commercial,Agent de maîtrise,Femme,60,28,Divorcé(e),2,5,1,4,2,1,1,4,5,3,5,1,5,5,4,1,3,2
+Opérations,Employé,Homme,58,12,Divorcé(e),2,1,3,2,5,4,4,5,4,4,5,4,3,5,4,1,4,3
+Direction Générale,Technicien,Homme,41,8,Divorcé(e),4,5,2,3,1,3,2,5,1,5,3,1,4,5,2,4,5,2
+Commercial,Agent de maîtrise,Femme,22,1,Divorcé(e),2,3,4,1,3,2,1,4,4,4,3,4,1,2,2,2,3,2
+Direction Générale,Employé,Homme,45,0,Marié(e),3,4,3,5,2,4,1,3,1,1,2,2,5,1,2,2,2,1
+Finance,Agent de maîtrise,Femme,44,11,Célibataire,4,3,3,3,4,4,1,1,3,3,2,2,1,3,2,4,2,2
+Finance,Cadre,Femme,27,27,Pacsé(e),4,2,3,5,4,3,3,2,1,5,5,3,2,4,2,5,2,5
+Opérations,Cadre,Homme,47,15,Pacsé(e),1,5,2,1,5,1,1,4,1,4,3,2,5,4,2,3,4,5
+IT,Agent de maîtrise,Homme,55,26,Marié(e),5,2,2,2,4,1,5,2,1,2,4,4,5,2,3,5,2,4
+RH,Technicien,Femme,26,3,Marié(e),1,1,4,4,2,5,4,3,3,2,1,5,3,2,5,4,4,4
+Opérations,Cadre,Femme,50,2,Pacsé(e),1,4,3,4,2,2,2,1,3,5,4,5,3,3,4,4,4,4
+Finance,Agent de maîtrise,Homme,27,25,Pacsé(e),1,4,3,4,5,2,5,3,2,1,4,3,1,5,2,5,5,3
+Opérations,Employé,Femme,51,3,Marié(e),2,5,3,5,3,4,4,2,4,3,5,3,5,1,5,1,2,3
+RH,Cadre,Femme,38,1,Marié(e),5,3,2,5,1,2,4,1,4,1,1,3,1,2,2,4,5,4
+Opérations,Employé,Femme,22,12,Marié(e),2,1,5,1,5,2,1,1,4,5,3,4,1,2,5,5,3,4
+Opérations,Agent de maîtrise,Homme,60,27,Pacsé(e),4,1,3,2,4,4,4,3,3,1,3,3,3,5,2,5,4,3
+Opérations,Technicien,Femme,28,20,Marié(e),3,3,4,5,1,3,3,2,3,1,3,3,1,3,3,3,4,3
+IT,Employé,Femme,45,2,Pacsé(e),1,2,5,3,4,4,5,1,3,2,1,3,1,1,2,4,5,3
+Commercial,Employé,Homme,29,25,Célibataire,3,5,5,5,4,1,3,3,2,2,3,2,4,2,4,5,3,2
+Opérations,Cadre,Homme,59,25,Célibataire,1,1,4,3,4,3,4,1,3,3,2,3,4,1,2,5,4,2
+Finance,Agent de maîtrise,Femme,51,24,Pacsé(e),3,5,4,1,5,3,2,1,1,2,4,4,2,3,5,5,2,1
+Opérations,Technicien,Homme,54,27,Pacsé(e),3,2,3,3,3,4,1,1,5,2,2,3,4,5,1,5,3,3
+IT,Cadre,Homme,39,7,Pacsé(e),3,1,4,5,3,1,1,3,2,3,3,5,4,3,3,2,3,4
+Commercial,Technicien,Homme,40,29,Divorcé(e),2,2,2,4,4,1,5,5,4,3,4,5,2,5,1,4,4,4
+IT,Agent de maîtrise,Femme,47,9,Divorcé(e),4,1,4,1,1,4,4,2,5,5,1,3,4,4,5,3,4,5
+IT,Employé,Femme,53,24,Divorcé(e),3,3,1,2,1,4,2,2,3,3,4,5,3,5,3,5,1,1
+RH,Employé,Homme,55,17,Pacsé(e),2,2,5,5,5,5,4,2,5,3,4,1,5,2,4,5,5,4
+RH,Agent de maîtrise,Femme,22,23,Célibataire,3,3,2,5,2,2,1,2,3,4,1,5,1,5,5,5,4,4
+Finance,Agent de maîtrise,Homme,48,18,Marié(e),1,3,4,4,3,5,1,4,1,1,1,2,2,2,3,3,1,3
+RH,Employé,Femme,26,19,Pacsé(e),5,1,1,1,2,2,3,2,1,4,5,3,2,3,1,3,5,2
