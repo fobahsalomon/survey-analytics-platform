@@ -23,6 +23,8 @@ warnings.filterwarnings("ignore")
 
 # ── path resolution ──────────────────────────────────────────────────────────
 ROOT = Path(__file__).parent.parent
+DATA_DIR = ROOT / "lib" / "data"
+SAMPLE_FILE = DATA_DIR / "sample_karasek2.csv"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -88,8 +90,24 @@ if uploaded is not None:
     st.session_state["_k_name"]  = uploaded.name
 
 if "_k_bytes" not in st.session_state:
-    st.info("Veuillez charger un fichier de données (Excel ou CSV) pour démarrer l'analyse.")
-    st.stop()
+    if SAMPLE_FILE.exists():
+        st.session_state["_k_bytes"] = SAMPLE_FILE.read_bytes()
+        st.session_state["_k_name"] = SAMPLE_FILE.name
+        st.session_state["_k_is_demo"] = True
+    else:
+        st.info("Veuillez charger un fichier de données (Excel ou CSV) pour démarrer l'analyse.")
+        st.stop()
+
+if uploaded is not None:
+    st.session_state["_k_is_demo"] = False
+else:
+    st.session_state.setdefault("_k_is_demo", False)
+
+if st.session_state.get("_k_is_demo"):
+    st.info(
+        f"Mode demo active: le fichier d'exemple `{st.session_state['_k_name']}` a ete charge automatiquement. "
+        "Importez votre propre fichier pour remplacer ces donnees."
+    )
 
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)

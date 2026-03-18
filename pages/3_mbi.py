@@ -18,6 +18,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 ROOT = Path(__file__).parent.parent
+DATA_DIR = ROOT / "lib" / "data"
+SAMPLE_FILE = DATA_DIR / "sample_mbi.csv"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -80,8 +82,24 @@ if uploaded is not None:
     st.session_state["_mbi_name"]  = uploaded.name
 
 if "_mbi_bytes" not in st.session_state:
-    st.info("Veuillez charger un fichier de données pour démarrer l'analyse MBI.")
-    st.stop()
+    if SAMPLE_FILE.exists():
+        st.session_state["_mbi_bytes"] = SAMPLE_FILE.read_bytes()
+        st.session_state["_mbi_name"] = SAMPLE_FILE.name
+        st.session_state["_mbi_is_demo"] = True
+    else:
+        st.info("Veuillez charger un fichier de données pour démarrer l'analyse MBI.")
+        st.stop()
+
+if uploaded is not None:
+    st.session_state["_mbi_is_demo"] = False
+else:
+    st.session_state.setdefault("_mbi_is_demo", False)
+
+if st.session_state.get("_mbi_is_demo"):
+    st.info(
+        f"Mode demo active: le fichier d'exemple `{st.session_state['_mbi_name']}` a ete charge automatiquement. "
+        "Importez votre propre fichier pour remplacer ces donnees."
+    )
 
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
