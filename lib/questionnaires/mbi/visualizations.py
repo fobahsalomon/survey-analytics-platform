@@ -25,11 +25,13 @@ RISK_COLORS={"Faible":GREEN,"Modéré":ORANGE,"Élevé":RED}
 HOMME_C="#4472C4"; FEMME_C="#E91E8C"
 
 def _fig_bytes(fig):
+    """Sérialise une figure Matplotlib en PNG puis la ferme."""
     buf=io.BytesIO()
     fig.savefig(buf,format="png",dpi=150,bbox_inches="tight",facecolor=fig.get_facecolor())
     plt.close(fig); buf.seek(0); return buf.read()
 
 def _base(ax,title="",xlabel="",ylabel="",wrap=58):
+    """Applique le style graphique partagé des visualisations MBI."""
     ax.set_facecolor(BG); ax.figure.patch.set_facecolor("white")
     ax.grid(True,color=GRID_C,linewidth=0.8,axis="x",zorder=0); ax.set_axisbelow(True)
     for s in ["top","right"]: ax.spines[s].set_visible(False)
@@ -194,6 +196,7 @@ def plot_mbi_heatmap(df, company=""):
 # ── 5. PYRAMIDE DES ÂGES ──────────────────────────────────────────────────────
 
 def plot_age_pyramid(df, company=""):
+    """Produit une pyramide des âges Homme/Femme à partir des tranches d'âge."""
     if "Tranche_age" not in df.columns or "Genre" not in df.columns: return None
     data=df[["Tranche_age","Genre"]].dropna()
     if data.empty: return None
@@ -237,10 +240,13 @@ def plot_age_pyramid(df, company=""):
 # ── ORCHESTRATEUR ──────────────────────────────────────────────────────────────
 
 class MBIVisualizations:
+    """Orchestre la génération des visuels MBI exportables."""
     def __init__(self, company=""):
+        """Mémorise le nom de l'organisation pour les titres de figures."""
         self.company = company
 
     def generate_all(self, df, metrics) -> Dict[str, bytes]:
+        """Génère toutes les figures MBI disponibles sous forme de PNG bytes."""
         generators = {
             "mbi_radar":        lambda: plot_mbi_radar(df, metrics, self.company),
             "mbi_bars":         lambda: plot_mbi_bars(df, metrics, self.company),
@@ -258,4 +264,5 @@ class MBIVisualizations:
         return results
 
     def generate_for_report(self, df, metrics) -> Dict[str, bytes]:
+        """Retourne les figures MBI destinées au rapport Word."""
         return self.generate_all(df, metrics)

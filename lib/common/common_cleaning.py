@@ -10,6 +10,16 @@ import pandas as pd
 from typing import List, Tuple
 
 
+AGE_TRANCHE_MIDPOINTS = {
+    "20-30 ans": 25.0,
+    "31-40 ans": 35.0,
+    "41-50 ans": 45.0,
+    "51-60 ans": 55.0,
+    "51 ans et plus": 55.0,
+    "61-70 ans": 65.0,
+}
+
+
 # ─── Normalisation texte ────────────────────────────────────────────────────
 
 def normalize_text(text: str) -> str:
@@ -90,6 +100,56 @@ def find_age_col(df: pd.DataFrame) -> str | None:
     return None
 
 
+def find_age_tranche_col(df: pd.DataFrame) -> str | None:
+    """Détecte une colonne de tranche d'âge, brute ou déjà harmonisée."""
+    if "Tranche_age" in df.columns:
+        return "Tranche_age"
+    return find_col_by_pattern(list(df.columns), [r"tranche.*age"])
+
+
+def age_tranche_to_numeric(series: pd.Series) -> pd.Series:
+    """Convertit des tranches d'âge en âge approximatif via midpoint."""
+    normalized_map = {normalize_text(k): v for k, v in AGE_TRANCHE_MIDPOINTS.items()}
+
+    def _parse(value):
+        key = normalize_text(value)
+        if key in normalized_map:
+            return normalized_map[key]
+
+        match = re.search(r"(\d{1,2})\s*[-a]\s*(\d{1,2})", key)
+        if match:
+            low = float(match.group(1))
+            high = float(match.group(2))
+            return (low + high) / 2
+
+        plus_match = re.search(r"(\d{1,2}).*(plus|et plus)", key)
+        if plus_match:
+            return float(plus_match.group(1)) + 4.0
+
+        return np.nan
+
+    return series.map(_parse).astype(float)
+
+
+def get_age_series(df: pd.DataFrame) -> pd.Series:
+    """Retourne une série d'âges numériques réels ou estimés depuis une tranche."""
+    age_col = find_age_col(df)
+    if age_col:
+        return pd.to_numeric(df[age_col], errors="coerce")
+
+    tranche_col = find_age_tranche_col(df)
+    if tranche_col:
+        return age_tranche_to_numeric(df[tranche_col].astype(str).str.strip())
+
+    return pd.Series(np.nan, index=df.index, dtype=float)
+
+
+def compute_average_age(df: pd.DataFrame) -> float:
+    """Calcule l'âge moyen avec fallback sur les tranches d'âge."""
+    ages = get_age_series(df).dropna()
+    return round(float(ages.mean()), 1) if not ages.empty else 0.0
+
+
 def enrich_sociodem(df: pd.DataFrame) -> pd.DataFrame:
     """Ajoute tranches d'âge, ancienneté et IMC si les colonnes sources existent."""
     df = df.copy()
@@ -104,6 +164,10 @@ def enrich_sociodem(df: pd.DataFrame) -> pd.DataFrame:
             labels=["20-30 ans", "31-40 ans", "41-50 ans", "51 ans et plus"],
             right=True,
         )
+    elif "Tranche_age" not in df.columns:
+        tranche_col = find_age_tranche_col(df)
+        if tranche_col:
+            df = remap_age_tranche(df, tranche_col)
 
     # Tranche ancienneté
     anc_col = find_col_by_pattern(cols, [r"anciennet"])
@@ -155,6 +219,26 @@ def invert_items(df: pd.DataFrame, cols: List[str], low: int = 1, high: int = 4)
         df[avail] = (low + high) - df[avail]
     return df
 
+def remap_age_tranche(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    """Remplace les tranches d'âge par des labels plus lisibles."""
+    mapping = {
+        "20-30 ans":   "20-30 ans",
+        "20 - 30 ans": "20-30 ans",
+        "31 - 40 ans": "31-40 ans",
+        "31-40 ans":   "31-40 ans",
+        "41 - 50 ans": "41-50 ans",
+        "41-50 ans":   "41-50 ans",
+        "51 - 60 ans": "51-60 ans",
+        "51-60 ans":   "51-60 ans",
+        "61 - 70 ans": "61-70 ans",
+        "61-70 ans":   "61-70 ans",
+        "51 ans et plus": "51 ans et plus",
+    }
+    if col in df.columns:
+        normalized_map = {normalize_text(k): v for k, v in mapping.items()}
+        src = df[col].astype(str).str.strip()
+        df["Tranche_age"] = src.map(lambda v: normalized_map.get(normalize_text(v), v))
+    return df
 
 def compute_group_score(
     df: pd.DataFrame,

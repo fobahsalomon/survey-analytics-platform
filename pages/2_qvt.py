@@ -21,6 +21,8 @@ ROOT = Path(__file__).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# La page QVT suit la même architecture que les autres pages :
+# upload -> pipeline -> filtres -> analytics -> visuels -> export.
 from lib.questionnaires.qvt import QVTQuestionnaire, QVTReporting, QVTVisualizations
 from lib.questionnaires.qvt.config import DIMENSIONS, THRESHOLDS, QVT_COLORS
 from lib.common.file_utils import load_dataframe
@@ -34,7 +36,7 @@ from pages._ui_shared import (
 )
 
 st.set_page_config(
-    page_title="QVT · Wave-CI",
+    page_title="QVT · SurveyLens",
     page_icon="🌱",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -85,6 +87,9 @@ if "_qvt_bytes" not in st.session_state:
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def run_pipeline(file_bytes: bytes, file_name: str, _v: int = 1):
+    """Charge, nettoie, score et classe un fichier QVT."""
+    # Le cache protège l'expérience utilisateur : changer un filtre ne doit pas
+    # forcer la relecture complète du fichier.
     q  = QVTQuestionnaire()
     df = load_dataframe(io.BytesIO(file_bytes), file_name=file_name)
     return q.run(df)
@@ -148,6 +153,8 @@ if len(df) == 0:
     st.warning("Aucun répondant ne correspond aux filtres sélectionnés.")
     st.stop()
 
+# `metrics` contient toute la matière première du dashboard.
+# Les onglets suivants se contentent de présenter ces résultats.
 # ─── ANALYTICS ───────────────────────────────────────────────────────────────
 q_engine = QVTQuestionnaire()
 metrics  = q_engine.analytics(df)
@@ -294,8 +301,8 @@ with tab_dims:
         return f"color: {color}; font-weight: 700"
 
     styled = df_tbl.style.applymap(_color_pct, subset=["% Satisfaisant"]) \
-                         .applymap(lambda v: "color:#EF4444;font-weight:700" if v > 30 else "", subset=["% Insatisfaisant"]) \
-                         .format({"Score moyen": "{:.2f}", "% Satisfaisant": "{:.1f}%", "% Mitigé": "{:.1f}%", "% Insatisfaisant": "{:.1f}%"})
+                        .applymap(lambda v: "color:#EF4444;font-weight:700" if v > 30 else "", subset=["% Insatisfaisant"]) \
+                        .format({"Score moyen": "{:.2f}", "% Satisfaisant": "{:.1f}%", "% Mitigé": "{:.1f}%", "% Insatisfaisant": "{:.1f}%"})
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
 

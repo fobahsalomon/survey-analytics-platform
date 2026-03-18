@@ -26,6 +26,8 @@ ROOT = Path(__file__).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# Chaque page Streamlit importe son module questionnaire comme un "moteur".
+# La page pilote l'expérience utilisateur, mais les calculs restent dans `lib/`.
 from lib.questionnaires.karasek import KarasekQuestionnaire, KarasekReporting, KarasekVisualizations
 from lib.questionnaires.karasek.config import THRESHOLDS, KARASEK_COLORS, SCORE_LABELS, RH_SCORE_GROUPS
 from pages._export_utils import render_zip_button, build_zip
@@ -39,7 +41,7 @@ from pages._ui_shared import (
 )
 
 st.set_page_config(
-    page_title="Karasek DCS · Wave-CI",
+    page_title="Karasek DCS · SurveyLens",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -92,6 +94,9 @@ if "_k_bytes" not in st.session_state:
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def run_pipeline(file_bytes: bytes, file_name: str, _v: int = 1):
+    """Charge, nettoie, score et classe un fichier Karasek."""
+    # Ce cache évite de recalculer tout le pipeline à chaque interaction UI
+    # quand le fichier source n'a pas changé.
     q  = KarasekQuestionnaire()
     df = load_dataframe(io.BytesIO(file_bytes), file_name=file_name)
     df = q.run(df)
@@ -115,6 +120,8 @@ if len(df) == 0:
     st.warning("Aucun répondant ne correspond aux filtres sélectionnés.")
     st.stop()
 
+# À partir d'ici, on ne travaille plus sur des réponses brutes.
+# `metrics` contient déjà des résumés prêts à être affichés dans le dashboard.
 # ─── ANALYTICS ───────────────────────────────────────────────────────────────
 q_engine  = KarasekQuestionnaire()
 metrics   = q_engine.analytics(df)
@@ -125,6 +132,8 @@ stress    = metrics["stress_indicators"]
 strain    = metrics["strain_prevalence"]
 rh        = metrics["rh_scores"]
 
+# Les exports réutilisent les mêmes métriques que l'écran.
+# Cela évite d'avoir deux logiques métier différentes entre UI et rapport.
 # ─── EXPORT WORD + ZIP (sidebar) ────────────────────────────────────────────
 with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -382,7 +391,6 @@ with tab_cross:
         "Tranche d'âge":                  "Tranche_age",
         "Ancienneté":                     "Tranche_anciennete",
         "Catégorie socioprofessionnelle":  csp_actual,
-        "Direction":                      "Direction",
         "Catégorie IMC":                  "Categorie_IMC",
     }
     CROSS_MAP = {

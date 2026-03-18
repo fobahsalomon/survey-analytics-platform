@@ -21,6 +21,7 @@ ROOT = Path(__file__).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# Même logique que pour Karasek et QVT : la page orchestre, le module MBI calcule.
 from lib.questionnaires.mbi import MBIQuestionnaire, MBIReporting, MBIVisualizations
 from lib.questionnaires.mbi.config import DIMENSIONS, THRESHOLDS, MBI_COLORS, BURNOUT_RISK_LEVELS
 from lib.common.file_utils import load_dataframe
@@ -34,7 +35,7 @@ from pages._ui_shared import (
 )
 
 st.set_page_config(
-    page_title="MBI Burnout · Wave-CI",
+    page_title="MBI Burnout · SurveyLens",
     page_icon="🔥",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -85,6 +86,8 @@ if "_mbi_bytes" not in st.session_state:
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def run_pipeline(file_bytes: bytes, file_name: str, _v: int = 1):
+    """Charge, nettoie, score et classe un fichier MBI."""
+    # Le pipeline transforme un fichier brut en données scorées prêtes à filtrer.
     q  = MBIQuestionnaire()
     df = load_dataframe(io.BytesIO(file_bytes), file_name=file_name)
     return q.run(df)
@@ -148,6 +151,8 @@ if len(df) == 0:
     st.warning("Aucun répondant ne correspond aux filtres sélectionnés.")
     st.stop()
 
+# Les analytics résument la population et le risque global.
+# Le reste de la page n'affiche que ces objets agrégés.
 # ─── ANALYTICS ───────────────────────────────────────────────────────────────
 q_engine    = MBIQuestionnaire()
 metrics     = q_engine.analytics(df)

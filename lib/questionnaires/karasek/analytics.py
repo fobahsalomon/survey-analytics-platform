@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any
 
-from lib.common import normalize_col, find_col_by_pattern
+from lib.common import normalize_col, find_col_by_pattern, compute_average_age
 from .config import THRESHOLDS, SCORE_LABELS, RH_SCORE_GROUPS
 
 
@@ -16,6 +16,7 @@ class KarasekAnalytics:
     """Calcule tous les indicateurs statistiques du modèle Karasek."""
 
     def __init__(self, df: pd.DataFrame):
+        """Stocke le DataFrame déjà nettoyé et scoré."""
         self.df = df
 
     # ─── helpers ────────────────────────────────────────────────────────────
@@ -35,6 +36,7 @@ class KarasekAnalytics:
         return 0.0, 0, 0
 
     def _strain_prevalence(self, col: str) -> tuple[float, int]:
+        """Calcule la prévalence d'un indicateur de strain binaire."""
         if col not in self.df.columns:
             return 0.0, 0
         v = self.df[col].dropna()
@@ -44,23 +46,35 @@ class KarasekAnalytics:
     # ─── données démographiques ──────────────────────────────────────────────
 
     def _demographics(self) -> Dict[str, Any]:
+        """Calcule les indicateurs démographiques de base."""
         df = self.df
         total = len(df)
-        gs = df["Genre"].astype(str).str.strip().str.lower() if "Genre" in df.columns else pd.Series(dtype=str)
-        n_men = int(gs.isin({"homme", "male", "m"}).sum()) if not gs.empty else 0
+
+        # ── Genre ────────────────────────────────────────────────────────────────
+        gs = (
+            df["Genre"].astype(str).str.strip().str.lower()
+            if "Genre" in df.columns
+            else pd.Series(dtype=str)
+        )
+        n_men   = int(gs.isin({"homme", "male", "m"}).sum())   if not gs.empty else 0
         n_women = int(gs.isin({"femme", "female", "f"}).sum()) if not gs.empty else 0
-        avg_age = round(float(pd.to_numeric(df["Age"], errors="coerce").mean()), 1) if "Age" in df.columns else 0.0
+
+        # ── Âge moyen ────────────────────────────────────────────────────────────
+        # Le helper partagé gère les deux cas :
+        # âge exact ou estimation à partir d'une tranche d'âge.
+        avg_age = compute_average_age(df)
 
         return {
-            "total": total,
-            "men": {"n": n_men, "pct": n_men / total * 100 if total else 0.0},
-            "women": {"n": n_women, "pct": n_women / total * 100 if total else 0.0},
+            "total":   total,
+            "men":     {"n": n_men,   "pct": n_men   / total * 100 if total else 0.0},
+            "women":   {"n": n_women, "pct": n_women / total * 100 if total else 0.0},
             "avg_age": avg_age,
         }
 
     # ─── modes de vie ────────────────────────────────────────────────────────
 
     def _lifestyle(self) -> Dict[str, Any]:
+        """Calcule les indicateurs de mode de vie détectables dans le fichier."""
         df = self.df
         total = len(df)
         result = {}
@@ -98,6 +112,7 @@ class KarasekAnalytics:
     # ─── quadrants ──────────────────────────────────────────────────────────
 
     def _quadrants(self) -> Dict[str, Any]:
+        """Calcule la répartition de la population dans les quadrants Karasek."""
         quad_col = "Karasek_quadrant_theoretical"
         if quad_col not in self.df.columns:
             return {}
@@ -118,6 +133,7 @@ class KarasekAnalytics:
     # ─── stress indicators ───────────────────────────────────────────────────
 
     def _stress_indicators(self) -> Dict[str, Any]:
+        """Construit quelques indicateurs résumés de stress au travail."""
         pct_lat, n_lat, _ = self._pct_high("Lat_score")
         pct_dem, n_dem, _ = self._pct_high("Dem_score")
         pct_ss, n_ss, _ = self._pct_high("SS_score")
@@ -130,6 +146,7 @@ class KarasekAnalytics:
     # ─── strain prevalence ───────────────────────────────────────────────────
 
     def _strain_prev(self) -> Dict[str, Any]:
+        """Regroupe les prévalences Job Strain et Iso-Strain."""
         pct_js, n_js = self._strain_prevalence("Job_strain_theoretical")
         pct_is, n_is = self._strain_prevalence("Iso_strain_theoretical")
         return {
@@ -140,6 +157,7 @@ class KarasekAnalytics:
     # ─── RH scores ──────────────────────────────────────────────────────────
 
     def _rh_scores(self) -> Dict[str, Any]:
+        """Calcule les pourcentages élevés des dimensions RH complémentaires."""
         result = {}
         rh_cols = [f"{g}_score" for g in RH_SCORE_GROUPS] + ["comp_score", "auto_score", "sup_score"]
         for col in rh_cols:
@@ -156,6 +174,7 @@ class KarasekAnalytics:
     # ─── point d'entrée ─────────────────────────────────────────────────────
 
     def compute(self) -> Dict[str, Any]:
+        # Point d'entrée unique consommé par les pages, visuels et rapports.
         return {
             "demographics":      self._demographics(),
             "lifestyle":         self._lifestyle(),

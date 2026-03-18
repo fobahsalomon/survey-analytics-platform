@@ -7,14 +7,18 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any
 
+from lib.common import compute_average_age
 from .config import DIMENSIONS, THRESHOLDS, SCORE_LABELS, QVT_COLORS
 
 
 class QVTAnalytics:
+    """Calcule les indicateurs agrégés du questionnaire QVT."""
     def __init__(self, df: pd.DataFrame):
+        """Stocke le DataFrame déjà nettoyé et scoré."""
         self.df = df
 
     def _pct_cat(self, score_col: str, category: str) -> tuple[float, int, int]:
+        """Retourne le pourcentage et l'effectif d'une catégorie de score."""
         cat_col = f"{score_col}_cat"
         if cat_col not in self.df.columns:
             return 0.0, 0, 0
@@ -24,6 +28,7 @@ class QVTAnalytics:
         return float(n / total * 100) if total else 0.0, n, total
 
     def _dimension_summary(self) -> Dict[str, Any]:
+        """Calcule les statistiques résumées de chaque dimension QVT."""
         result = {}
         for dim in DIMENSIONS:
             col = f"{dim}_score"
@@ -44,6 +49,7 @@ class QVTAnalytics:
         return result
 
     def _global_summary(self) -> Dict[str, Any]:
+        """Calcule les statistiques du score QVT global."""
         col = "qvt_global_score"
         if col not in self.df.columns:
             return {}
@@ -58,12 +64,14 @@ class QVTAnalytics:
         }
 
     def _demographics(self) -> Dict[str, Any]:
+        """Calcule les indicateurs démographiques de base."""
         df = self.df
         total = len(df)
         gs = df["Genre"].astype(str).str.strip().str.lower() if "Genre" in df.columns else pd.Series(dtype=str)
         n_men = int(gs.isin({"homme", "male", "m"}).sum()) if not gs.empty else 0
         n_women = int(gs.isin({"femme", "female", "f"}).sum()) if not gs.empty else 0
-        avg_age = round(float(pd.to_numeric(df["Age"], errors="coerce").mean()), 1) if "Age" in df.columns else 0.0
+        # On ne suppose pas que le fichier contient toujours un âge exact.
+        avg_age = compute_average_age(df)
         return {
             "total": total,
             "men": {"n": n_men, "pct": n_men / total * 100 if total else 0.0},
@@ -72,6 +80,7 @@ class QVTAnalytics:
         }
 
     def compute(self) -> Dict[str, Any]:
+        """Retourne le paquet complet de métriques QVT pour le dashboard."""
         return {
             "demographics":   self._demographics(),
             "dimensions":     self._dimension_summary(),

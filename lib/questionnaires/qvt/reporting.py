@@ -20,17 +20,21 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
 
-def _rgb(r,g,b): return RGBColor(r,g,b) if DOCX_AVAILABLE else None
+def _rgb(r,g,b):
+    """Crée une couleur RGB `python-docx` si la dépendance est disponible."""
+    return RGBColor(r,g,b) if DOCX_AVAILABLE else None
 C_DARK=_rgb(15,35,64); C_BLUE=_rgb(56,163,232); C_MID=_rgb(47,87,127)
 C_GRAY=_rgb(107,136,168); C_GREEN=_rgb(34,197,94); C_RED=_rgb(239,68,68)
 C_ORG=_rgb(249,115,22); C_WHITE=_rgb(255,255,255)
 
 def _cell_bg(cell, hx):
+    """Applique une couleur de fond à une cellule Word."""
     tc=cell._tc; tcPr=tc.get_or_add_tcPr()
     shd=OxmlElement("w:shd"); shd.set(qn("w:val"),"clear")
     shd.set(qn("w:color"),"auto"); shd.set(qn("w:fill"),hx.lstrip("#")); tcPr.append(shd)
 
 def _cell_borders(cell, color="D6E8F7"):
+    """Ajoute des bordures standard à une cellule Word."""
     tc=cell._tc; tcPr=tc.get_or_add_tcPr(); tcB=OxmlElement("w:tcBorders")
     for side in ("top","left","bottom","right"):
         el=OxmlElement(f"w:{side}"); el.set(qn("w:val"),"single")
@@ -38,28 +42,34 @@ def _cell_borders(cell, color="D6E8F7"):
     tcPr.append(tcB)
 
 def _spacing(para, before=0, after=80):
+    """Applique des espacements avant/après à un paragraphe Word."""
     pPr=para._p.get_or_add_pPr(); sp=OxmlElement("w:spacing")
     sp.set(qn("w:before"),str(before)); sp.set(qn("w:after"),str(after)); pPr.append(sp)
 
 def _hex_rgb(h):
+    """Convertit une couleur hexadécimale en objet RGBColor."""
     h=h.lstrip("#"); return _rgb(int(h[0:2],16),int(h[2:4],16),int(h[4:6],16))
 
 CAT_HEX={"Satisfaisant":"22C55E","Mitigé":"F97316","Insatisfaisant":"EF4444"}
 
 
 class QVTReporting:
+    """Génère le rapport Word du questionnaire QVT."""
     def __init__(self, company_name="l'organisation"):
+        """Initialise le générateur de rapport avec le nom de l'organisation."""
         if not DOCX_AVAILABLE:
             raise ImportError("python-docx requis : pip install python-docx --break-system-packages")
         self.company_name=company_name
 
     def _h(self, doc, text, level=1):
+        """Ajoute un titre Word stylé selon le niveau hiérarchique."""
         h=doc.add_heading(text,level=level)
         color=C_DARK if level==1 else C_MID
         for run in h.runs: run.font.color.rgb=color
         return h
 
     def _divider(self, doc, color="D6E8F7", thick=6):
+        """Ajoute une ligne de séparation décorative dans le document."""
         p=doc.add_paragraph(); pPr=p._p.get_or_add_pPr()
         pBdr=OxmlElement("w:pBdr"); bot=OxmlElement("w:bottom")
         bot.set(qn("w:val"),"single"); bot.set(qn("w:sz"),str(thick))
@@ -67,6 +77,7 @@ class QVTReporting:
         _spacing(p,after=120)
 
     def _kpi(self, doc, label, pct, n, good=None, inv=False):
+        """Ajoute une ligne KPI colorée dans le rapport."""
         p=doc.add_paragraph(style="Normal"); _spacing(p,before=40,after=40)
         b=p.add_run("• "); b.font.color.rgb=C_BLUE
         l=p.add_run(f"{label} : "); l.font.bold=True; l.font.color.rgb=C_MID
@@ -74,10 +85,12 @@ class QVTReporting:
         v=p.add_run(f"{pct:.1f}%  (n={n})"); v.font.bold=True; v.font.color.rgb=vc
 
     def _note(self, doc, text):
+        """Ajoute une note méthodologique ou explicative en style discret."""
         p=doc.add_paragraph(style="Normal"); _spacing(p,before=40,after=40)
         r=p.add_run(text); r.font.italic=True; r.font.color.rgb=C_GRAY; r.font.size=Pt(9)
 
     def _cover(self, doc, total):
+        """Construit la page de garde du rapport QVT."""
         title=doc.add_heading("Rapport QVT",0)
         title.alignment=WD_ALIGN_PARAGRAPH.CENTER
         if title.runs:
@@ -101,6 +114,7 @@ class QVTReporting:
         doc.add_paragraph(); self._divider(doc,"22C55E",thick=10); doc.add_page_break()
 
     def _s1_pop(self, doc, metrics):
+        """Construit la section population et démographie."""
         self._h(doc,"1. Population")
         demo=metrics.get("demographics",{})
         men=demo.get("men",{}); women=demo.get("women",{})
@@ -121,6 +135,7 @@ class QVTReporting:
         doc.add_paragraph()
 
     def _s2_global(self, doc, metrics):
+        """Construit la section dédiée au score QVT global."""
         self._h(doc,"2. Score QVT Global")
         glb=metrics.get("global",{})
         if glb:
@@ -136,6 +151,7 @@ class QVTReporting:
         doc.add_paragraph()
 
     def _s3_dims(self, doc, metrics):
+        """Construit le tableau détaillé des dimensions QVT."""
         self._h(doc,"3. Résultats par Dimension")
         dims=metrics.get("dimensions",{})
         if not dims:
@@ -174,6 +190,7 @@ class QVTReporting:
         doc.add_paragraph()
 
     def _s4_figures(self, doc, figures):
+        """Insère les figures QVT disponibles dans le document Word."""
         if not figures: return
         self._h(doc,"4. Visualisations")
         fig_meta=[
@@ -191,6 +208,7 @@ class QVTReporting:
             doc.add_paragraph()
 
     def generate(self, metrics:Dict[str,Any], figures:Optional[Dict[str,bytes]]=None) -> bytes:
+        """Génère le rapport QVT complet et renvoie les bytes du `.docx`."""
         doc=Document()
         doc.styles["Normal"].font.name="Calibri"; doc.styles["Normal"].font.size=Pt(11)
         for s in doc.sections:

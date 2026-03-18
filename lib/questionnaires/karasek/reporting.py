@@ -3,18 +3,18 @@ lib/questionnaires/karasek/reporting.py
 Rapport Word Karasek — structure fusionnée des deux versions.
 
 Structure :
-  Page de garde
-  1. Données Démographiques & Modes de Vie
-     1.1 Données démographiques (tableau)
-     1.2 Indicateurs de modes de vie
-  2. Résultats Principaux
-     2.1 Méthodologie & Seuils Théoriques (tableau coloré)
-     2.2 Quadrants de Karasek (tableau 4 cases colorées)
-     2.3 Prévalence des RPS
-     2.4 Indicateurs clés de stress
-     2.5 Climat organisationnel (tableau RH coloré)
-  3. Visualisations (toutes les figures PNG)
-  Note méthodologique
+Page de garde
+1. Données Démographiques & Modes de Vie
+    1.1 Données démographiques (tableau)
+    1.2 Indicateurs de modes de vie
+2. Résultats Principaux
+    2.1 Méthodologie & Seuils Théoriques (tableau coloré)
+    2.2 Quadrants de Karasek (tableau 4 cases colorées)
+    2.3 Prévalence des RPS
+    2.4 Indicateurs clés de stress
+    2.5 Climat organisationnel (tableau RH coloré)
+3. Visualisations (toutes les figures PNG)
+Note méthodologique
 """
 
 import io
@@ -34,8 +34,9 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
 
-# ─── Palette Wave-CI ─────────────────────────────────────────────────────────
+# ─── Palette SurveyLens ─────────────────────────────────────────────────────────
 def _rgb(r, g, b):
+    """Crée une couleur RGB `python-docx` si la dépendance est disponible."""
     return RGBColor(r, g, b) if DOCX_AVAILABLE else None
 
 C_DARK   = _rgb(15,  35,  64)
@@ -60,6 +61,7 @@ QUAD_HEX = {
 # =============================================================================
 
 def _cell_bg(cell, hex_color: str):
+    """Applique une couleur de fond à une cellule Word."""
     tc = cell._tc
     tcPr = tc.get_or_add_tcPr()
     shd = OxmlElement("w:shd")
@@ -70,6 +72,7 @@ def _cell_bg(cell, hex_color: str):
 
 
 def _cell_borders(cell, color: str = "D6E8F7"):
+    """Ajoute des bordures standard à une cellule Word."""
     tc = cell._tc
     tcPr = tc.get_or_add_tcPr()
     tcB = OxmlElement("w:tcBorders")
@@ -83,6 +86,7 @@ def _cell_borders(cell, color: str = "D6E8F7"):
 
 
 def _spacing(para, before: int = 0, after: int = 80):
+    """Applique des espacements avant/après à un paragraphe Word."""
     pPr = para._p.get_or_add_pPr()
     sp = OxmlElement("w:spacing")
     sp.set(qn("w:before"), str(before))
@@ -91,6 +95,7 @@ def _spacing(para, before: int = 0, after: int = 80):
 
 
 def _hex_rgb(h: str) -> RGBColor:
+    """Convertit une couleur hexadécimale en objet RGBColor."""
     h = h.lstrip("#")
     return _rgb(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
@@ -103,6 +108,7 @@ class KarasekReporting:
     """Génère le rapport Word Karasek complet — structure fusionnée."""
 
     def __init__(self, company_name: str = "l'organisation"):
+        """Initialise le générateur de rapport avec le nom de l'organisation."""
         if not DOCX_AVAILABLE:
             raise ImportError(
                 "python-docx requis : pip install python-docx --break-system-packages"
@@ -112,6 +118,7 @@ class KarasekReporting:
     # ── micro-helpers ─────────────────────────────────────────────────────────
 
     def _h(self, doc, text: str, level: int = 1):
+        """Ajoute un titre Word stylé selon le niveau hiérarchique."""
         h = doc.add_heading(text, level=level)
         color = C_DARK if level == 1 else C_MID
         for run in h.runs:
@@ -119,6 +126,7 @@ class KarasekReporting:
         return h
 
     def _divider(self, doc, color: str = "D6E8F7", thick: int = 6):
+        """Ajoute une ligne de séparation décorative dans le document."""
         p = doc.add_paragraph()
         pPr = p._p.get_or_add_pPr()
         pBdr = OxmlElement("w:pBdr")
@@ -131,8 +139,9 @@ class KarasekReporting:
         _spacing(p, after=120)
 
     def _kpi(self, doc, label: str, pct: float, n: int,
-             good: Optional[float] = None, inv: bool = False,
-             color: RGBColor = None):
+            good: Optional[float] = None, inv: bool = False,
+            color: RGBColor = None):
+        """Ajoute une ligne KPI colorée dans le rapport."""
         p = doc.add_paragraph(style="Normal")
         _spacing(p, before=40, after=40)
         b = p.add_run("• ");     b.font.color.rgb = C_BLUE
@@ -144,10 +153,11 @@ class KarasekReporting:
             val_c = C_GREEN if ((pct >= good) != inv) else C_RED
         else:
             val_c = C_BLUE
-        v = p.add_run(f"{pct:.1f}%  (n={n})")
+        v = p.add_run(f"{pct:.1f}%  ({n})")
         v.font.bold = True;      v.font.color.rgb = val_c
 
     def _note(self, doc, text: str):
+        """Ajoute une note méthodologique ou explicative en style discret."""
         p = doc.add_paragraph(style="Normal")
         _spacing(p, before=40, after=40)
         r = p.add_run(text)
@@ -156,6 +166,7 @@ class KarasekReporting:
     # ── page de garde ─────────────────────────────────────────────────────────
 
     def _cover(self, doc, total):
+        """Construit la page de garde du rapport Karasek."""
         title = doc.add_heading("Rapport d'Analyse Karasek", 0)
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
         if title.runs:
@@ -176,7 +187,7 @@ class KarasekReporting:
             ("Organisation",      self.company_name),
             ("Date",              datetime.now().strftime("%d/%m/%Y %H:%M")),
             ("Effectif analysé",  f"{total} répondant(s)"),
-            ("Seuils",            "Théoriques — point médian Likert 1–4 (non cliniques)"),
+            ("Seuils",            "Théoriques — point médian Likert 1–4"),
             ("Modèle",            "Karasek & Theorell — Demande–Contrôle–Soutien (DCS)"),
         ]:
             p = doc.add_paragraph(style="Normal")
@@ -193,6 +204,7 @@ class KarasekReporting:
     # ── section 1 ─────────────────────────────────────────────────────────────
 
     def _s1_demo(self, doc, metrics: Dict):
+        """Construit la section démographie et modes de vie."""
         self._h(doc, "1. Données Démographiques & Modes de Vie")
 
         # 1.1 tableau démographie
@@ -207,8 +219,8 @@ class KarasekReporting:
 
         headers = ["Hommes", "Femmes", "Âge moyen"]
         values  = [
-            f"{men.get('pct', 0):.1f}%  (n={men.get('n', 0)})",
-            f"{women.get('pct', 0):.1f}%  (n={women.get('n', 0)})",
+            f"{men.get('pct', 0):.1f}%  ({men.get('n', 0)})",
+            f"{women.get('pct', 0):.1f}%  ({women.get('n', 0)})",
             f"{demo.get('avg_age', 0)} ans",
         ]
         for i, (h, v) in enumerate(zip(headers, values)):
@@ -247,6 +259,7 @@ class KarasekReporting:
     # ── section 2 ─────────────────────────────────────────────────────────────
 
     def _s2_results(self, doc, metrics: Dict):
+        """Construit la section des résultats principaux Karasek."""
         self._h(doc, "2. Résultats Principaux")
 
         # 2.1 seuils
@@ -267,7 +280,7 @@ class KarasekReporting:
             "adq_resources_score","adq_role_score",
         ]
         rows_data = [(k, SCORE_LABELS.get(k, k))
-                     for k in key_scores if k in THRESHOLDS]
+                    for k in key_scores if k in THRESHOLDS]
 
         tbl = doc.add_table(rows=1, cols=2)
         tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -337,12 +350,12 @@ class KarasekReporting:
         strain = metrics.get("strain_prevalence", {})
         if "Job_strain" in strain:
             self._kpi(doc, "Job Strain — Tension au travail",
-                      strain["Job_strain"]["pct"], strain["Job_strain"]["n"],
-                      good=25, inv=True)
+                    strain["Job_strain"]["pct"], strain["Job_strain"]["n"],
+                    good=25, inv=True)
         if "Iso_strain" in strain:
             self._kpi(doc, "Iso-Strain — Isolement au travail",
-                      strain["Iso_strain"]["pct"], strain["Iso_strain"]["n"],
-                      good=25, inv=True)
+                    strain["Iso_strain"]["pct"], strain["Iso_strain"]["n"],
+                    good=25, inv=True)
         self._note(doc, "Seuil de vigilance indicatif : > 25% (non clinique).")
         doc.add_paragraph()
 
@@ -356,7 +369,7 @@ class KarasekReporting:
         ]:
             if key in stress:
                 self._kpi(doc, lbl, stress[key]["pct"], stress[key]["n"],
-                          good=thr, inv=inv)
+                        good=thr, inv=inv)
         doc.add_paragraph()
 
         # 2.5 RH — tableau coloré
@@ -392,6 +405,7 @@ class KarasekReporting:
     # ── section 3 ─────────────────────────────────────────────────────────────
 
     def _s3_figures(self, doc, figures: Dict[str, bytes]):
+        """Insère les figures Karasek disponibles dans le document Word."""
         if not figures:
             return
         self._h(doc, "3. Visualisations")
@@ -404,8 +418,7 @@ class KarasekReporting:
             ("age_pyramid",         "3.5 Pyramide des âges",                         Inches(4.8)),
             ("genre_barplot",       "3.6 Répartition par Genre",                     Inches(4.4)),
             ("tranche_age_barplot", "3.7 Répartition par Tranche d'âge",             Inches(4.4)),
-            ("direction_barplot",   "3.8 Répartition par Direction",                 Inches(4.6)),
-            ("csp_barplot",         "3.9 Répartition par CSP",                       Inches(4.6)),
+            ("csp_barplot",         "3.8 Répartition par CSP",                       Inches(4.6)),
         ]
         for key, title, width in fig_meta:
             if key not in figures or not figures[key]:
@@ -418,14 +431,15 @@ class KarasekReporting:
     # ── pied de document ──────────────────────────────────────────────────────
 
     def _footer(self, doc):
+        """Ajoute les notes finales et le pied méthodologique du rapport."""
         doc.add_paragraph()
         self._divider(doc, "D6E8F7", thick=4)
         for note in [
             "Les seuils utilisés sont des seuils théoriques (point médian Likert 1–4). "
-            "Ils sont conventionnels et ne constituent pas des seuils cliniques diagnostiques.",
+            "Ils sont conventionnels",
             "Job Strain : demande psychologique élevée + latitude décisionnelle faible.",
             "Iso-Strain : Job Strain + faible soutien social.",
-            f"Rapport généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} — Wave-CI Platform.",
+            f"Rapport généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} — SurveyLens Platform.",
         ]:
             self._note(doc, f"• {note}")
 

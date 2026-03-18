@@ -12,11 +12,14 @@ import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
 
+from lib.common import get_age_series
+
 
 # =============================================================================
-# CSS GLOBAL — palette Wave-CI
+# CSS GLOBAL — palette SurveyLens
 # =============================================================================
 def inject_css():
+    """Injecte la feuille de style globale utilisée par toutes les pages."""
     st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,400;1,9..144,600&display=swap');
@@ -137,6 +140,7 @@ hr { border: none; border-top: 1px solid #E4F0FB; margin: 1rem 0; }
 
 
 def inject_animation_js():
+    """Injecte le JavaScript qui anime les KPI, jauges et barres de progression."""
     components.html("""
 <script>
 const rootDoc = window.parent && window.parent.document ? window.parent.document : document;
@@ -187,10 +191,12 @@ rootDoc.addEventListener('click',evt=>{if(evt.target?.closest('[role="tab"]'))se
 # =============================================================================
 
 def section_title(text: str):
+    """Affiche un titre de section visuellement homogène."""
     st.markdown(f'<div class="section-title">{text}</div>', unsafe_allow_html=True)
 
 
 def svg_icon(path_d: str, bg: str, fg: str) -> str:
+    """Construit une petite icône SVG réutilisable dans les cartes KPI."""
     return (f'<span class="kpi-icon" style="background:{bg};color:{fg};">'
             f'<svg viewBox="0 0 24 24" width="17" height="17" fill="none">'
             f'<path d="{path_d}" stroke="currentColor" stroke-width="1.9" '
@@ -199,6 +205,7 @@ def svg_icon(path_d: str, bg: str, fg: str) -> str:
 
 
 def html_kpi(value, label, suffix="", prefix="", decimals=0, subtitle="", icon="") -> str:
+    """Retourne le HTML d'une carte KPI simple avec compteur animé."""
     num = float(pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0] or 0)
     rend = f"{num:.{decimals}f}" if decimals > 0 else str(int(round(num)))
     sub  = f'<div style="margin-top:0.4rem;font-size:0.78rem;font-weight:600;color:#4E6A88;">{subtitle}</div>' if subtitle else ""
@@ -208,6 +215,7 @@ def html_kpi(value, label, suffix="", prefix="", decimals=0, subtitle="", icon="
 
 
 def html_gauge(value, label, sublabel, inverted=False) -> str:
+    """Retourne le HTML d'une jauge semi-circulaire exprimée en pourcentage."""
     t = max(0.0, min(100.0, float(value) if not pd.isna(value) else 0.0))
     d = int(round(t))
     if inverted:
@@ -241,6 +249,7 @@ def html_gauge_raw(value, max_value, label, sublabel, color="#38A3E8", badge_tex
 
 
 def html_prog(label, pct, color, n=0) -> str:
+    """Construit une barre de progression avec libellé, pourcentage et effectif."""
     v = max(0.0, min(100.0, float(pct) if not pd.isna(pct) else 0.0))
     return f"""<div style="margin-bottom:1rem;">
     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
@@ -251,6 +260,7 @@ def html_prog(label, pct, color, n=0) -> str:
 
 
 def html_zone(label, pct, n, color) -> str:
+    """Construit une carte compacte pour afficher une zone ou un niveau de risque."""
     v = max(0.0, min(100.0, float(pct) if not pd.isna(pct) else 0.0))
     return f"""<div class="workzone-card" style="border-top:3px solid {color};">
     <span class="kpi-label">{label}</span>
@@ -259,12 +269,13 @@ def html_zone(label, pct, n, color) -> str:
 
 
 def html_ls_n(pct, n, label) -> str:
+    """Construit une carte simple pour les indicateurs de mode de vie."""
     num = float(pct) if not pd.isna(pct) else 0.0
     col = "#22C55E" if num < 35 else "#EF4444" if num > 60 else "#F97316"
     return f"""<div class="ls-card" style="border-top:3px solid {col};">
     <span class="kpi-label">{label}</span>
     <div class="kpi-value animate-number" style="color:{col};font-size:1.8rem;" data-target="{int(round(num))}" data-suffix="%" data-prefix="" data-decimals="0">{int(round(num))}%</div>
-    <div style="margin-top:0.3rem;font-size:0.78rem;font-weight:600;color:#4E6A88;">n = {int(n)}</div></div>"""
+    <div style="margin-top:0.3rem;font-size:0.78rem;font-weight:600;color:#4E6A88;">{int(n)}</div></div>"""
 
 
 # =============================================================================
@@ -272,13 +283,14 @@ def html_ls_n(pct, n, label) -> str:
 # =============================================================================
 
 def _plotly_base(fig, height=None):
+    """Applique le style Plotly commun à tous les graphiques interactifs."""
     upd = dict(
         plot_bgcolor="#FAFCFF", paper_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Plus Jakarta Sans, sans-serif", color="#0F2340", size=12),
         xaxis=dict(showgrid=True, gridcolor="#EDF5FD", gridwidth=1, showline=True,
-                   linecolor="#D6E8F7", zeroline=False, tickfont=dict(color="#6B88A8", size=11)),
+                linecolor="#D6E8F7", zeroline=False, tickfont=dict(color="#6B88A8", size=11)),
         yaxis=dict(showgrid=True, gridcolor="#EDF5FD", gridwidth=1, showline=False,
-                   zeroline=False, tickfont=dict(color="#6B88A8", size=11)),
+                zeroline=False, tickfont=dict(color="#6B88A8", size=11)),
         legend=dict(bgcolor="rgba(255,255,255,0.95)", bordercolor="#D6E8F7", borderwidth=1,
                     font=dict(color="#0F2340", size=11)),
         margin=dict(l=40, r=20, t=50, b=40),
@@ -290,6 +302,7 @@ def _plotly_base(fig, height=None):
 
 
 def make_barplot(df, col):
+    """Crée un barplot horizontal de répartition pour une variable catégorielle."""
     cnt = df[col].value_counts().reset_index()
     cnt.columns = [col, "n"]
     cnt["pct"] = (cnt["n"] / cnt["n"].sum() * 100).round(1)
@@ -310,6 +323,7 @@ def make_barplot(df, col):
 
 
 def make_stacked(df, x_col, hue_col):
+    """Crée un barplot empilé 100% pour croiser deux variables."""
     if x_col not in df.columns or hue_col not in df.columns:
         return None
     tmp = df[[x_col, hue_col]].dropna()
@@ -343,6 +357,7 @@ def make_stacked(df, x_col, hue_col):
 
 
 def make_radar(scores: dict, labels: list):
+    """Construit un radar Plotly à partir d'un dictionnaire de scores."""
     vals = [scores.get(l, 0) for l in labels]
     vc = vals + [vals[0]]
     lc = labels + [labels[0]]
@@ -376,6 +391,7 @@ def make_radar(scores: dict, labels: list):
 
 
 def fig_to_png(fig) -> bytes | None:
+    """Convertit une figure Plotly ou Matplotlib en bytes PNG."""
     try:
         if hasattr(fig, "to_image"):
             return fig.to_image(format="png")
@@ -392,10 +408,12 @@ def fig_to_png(fig) -> bytes | None:
 # =============================================================================
 
 def _norm(v):
+    """Normalise une valeur texte pour les comparaisons de filtres."""
     return re.sub(r"\s+", " ", str(v).strip()).casefold()
 
 
 def _clean_opts(series):
+    """Nettoie et déduplique les options d'un filtre catégoriel."""
     out = {}
     for raw in series.dropna().astype(str):
         c = re.sub(r"\s+", " ", raw.strip())
@@ -439,7 +457,7 @@ def render_sidebar(df_raw: pd.DataFrame, prefix: str = "sb") -> pd.DataFrame:
             st.session_state[f"{prefix}_genre"] = ALL
         sel_genre = st.selectbox("Genre", genres, key=f"{prefix}_genre")
 
-        age_s = pd.to_numeric(df_raw["Age"], errors="coerce").dropna() if "Age" in df_raw.columns else pd.Series(dtype=float)
+        age_s = get_age_series(df_raw).dropna()
         sel_age = None
         if not age_s.empty:
             ab = (int(np.floor(age_s.min())), int(np.ceil(age_s.max())))
@@ -464,8 +482,8 @@ def render_sidebar(df_raw: pd.DataFrame, prefix: str = "sb") -> pd.DataFrame:
         out = out[out[csp_c].astype(str).map(_norm) == _norm(sel_csp)]
     if "Genre" in out.columns and sel_genre != ALL:
         out = out[out["Genre"].astype(str).map(_norm) == _norm(sel_genre)]
-    if sel_age and "Age" in out.columns:
-        ages = pd.to_numeric(out["Age"], errors="coerce")
+    if sel_age:
+        ages = get_age_series(out)
         out = out[(ages >= sel_age[0]) & (ages <= sel_age[1])]
     return out
 

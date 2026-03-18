@@ -13,13 +13,13 @@ from typing import Dict, Optional
 def build_zip(
     docx_bytes: Optional[bytes],
     figures: Dict[str, bytes],
-    prefix: str = "wave_ci",
+    prefix: str = "SurveyLens",
     company: str = "",
 ) -> bytes:
     """
     Construit un ZIP contenant :
-      - Le rapport Word (.docx)
-      - Toutes les figures PNG dans un sous-dossier figures/
+    - Le rapport Word (.docx)
+    - Toutes les figures PNG dans un sous-dossier figures/
 
     Parameters
     ----------
@@ -32,6 +32,8 @@ def build_zip(
     -------
     bytes du fichier ZIP
     """
+    # Les noms de fichiers incluent date et organisation pour éviter les
+    # collisions et rendre l'archive compréhensible hors de l'application.
     date_str = datetime.now().strftime("%Y%m%d_%H%M")
     company_slug = (
         company.lower()
@@ -78,16 +80,18 @@ def build_zip(
             zf.writestr(fname, png_bytes)
 
         # ── README dans le ZIP ────────────────────────────────────────────────
+        # On ajoute un petit mode d'emploi pour que l'archive reste utile même
+        # une fois sortie du contexte Streamlit.
         readme = (
-            f"Wave-CI — Export {prefix.upper()}\n"
+            f"SurveyLens — Export {prefix.upper()}\n"
             f"{'=' * 40}\n"
             f"Organisation : {company or 'N/A'}\n"
             f"Date         : {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
             f"Contenu de cette archive :\n"
             f"  • Rapport Word (.docx) — analyse complète\n"
             f"  • figures/ — {len(figures)} visualisation(s) PNG haute résolution\n\n"
-            f"Seuils : théoriques uniquement — non cliniques.\n"
-            f"Plateforme : Wave-CI\n"
+            f"Seuils : théoriques uniquement.\n"
+            f"Plateforme : SurveyLens\n"
         )
         zf.writestr("README.txt", readme)
 
@@ -114,7 +118,7 @@ def render_zip_button(
 
     zip_bytes = build_zip(docx_bytes, figures, prefix=prefix, company=company)
     date_str  = datetime.now().strftime("%Y%m%d")
-    filename  = f"wave_ci_{prefix}_{date_str}.zip"
+    filename  = f"SurveyLens_{prefix}_{date_str}.zip"
 
     st.download_button(
         label=label,

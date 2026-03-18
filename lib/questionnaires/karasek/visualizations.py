@@ -20,9 +20,9 @@ import seaborn as sns
 
 warnings.filterwarnings("ignore")
 
-from .config import THRESHOLDS, SCORE_LABELS, KARASEK_COLORS
+from .config import THRESHOLDS, ALL_CROSSTABS, VAR_LABELS
 
-# ─── Palette Wave-CI ─────────────────────────────────────────────────────────
+# ─── Palette SurveyLens ─────────────────────────────────────────────────────────
 ACCENT      = "#38A3E8"
 ORANGE      = "#F97316"
 GREEN       = "#22C55E"
@@ -45,6 +45,17 @@ BAR_PALETTE = [ACCENT, ORANGE, GREEN, RED, "#A78BFA", "#06B6D4", "#FB923C", "#84
 
 HOMME_COLOR = "#4472C4"
 FEMME_COLOR = "#E91E8C"
+
+_COLUMN_ALIASES = {
+    "Karasek_quadrant": "Karasek_quadrant_theoretical",
+    "Job_strain": "Job_strain_theoretical",
+    "Iso_strain": "Iso_strain_theoretical",
+}
+
+_QUADRANT_ALIASES = {
+    "Détendu": "Detendu",
+    "Relaxed": "Detendu",
+}
 
 
 def _fig_bytes(fig) -> bytes:
@@ -70,12 +81,38 @@ def _base_style(ax, title: str = "", xlabel: str = "", ylabel: str = "",
     ax.tick_params(colors=TEXT_MID, labelsize=9)
     if title:
         ax.set_title("\n".join(textwrap.wrap(title, title_wrap)),
-                     fontsize=13, fontweight="bold", color=DARK, pad=14)
+                    fontsize=13, fontweight="bold", color=DARK, pad=14)
     if xlabel:
         ax.set_xlabel(xlabel, fontsize=10, color=TEXT_MID, labelpad=8)
     if ylabel:
         ax.set_ylabel("\n".join(textwrap.wrap(ylabel, 22)),
-                      fontsize=10, color=TEXT_MID, labelpad=8)
+                    fontsize=10, color=TEXT_MID, labelpad=8)
+
+
+def _resolve_column(df: pd.DataFrame, col: str) -> Optional[str]:
+    """Retourne le nom de colonne effectivement présent dans le DataFrame."""
+    if col in df.columns:
+        return col
+    alias = _COLUMN_ALIASES.get(col)
+    if alias in df.columns:
+        return alias
+    return None
+
+
+def _normalize_quadrants(series: pd.Series) -> pd.Series:
+    """Normalise les libellés de quadrants pour éviter les doublons d'accents."""
+    return series.replace(_QUADRANT_ALIASES)
+
+
+def _label(col: str) -> str:
+    """Retourne le libellé lisible d'une variable, avec majuscule initiale."""
+    raw = VAR_LABELS.get(col, col.replace("_", " "))
+    return raw[0].upper() + raw[1:] if raw else col
+
+
+def _label_lower(col: str) -> str:
+    """Retourne le libellé lisible d'une variable en minuscule (pour titres composés)."""
+    return VAR_LABELS.get(col, col.replace("_", " "))
 
 
 # =============================================================================
@@ -110,9 +147,9 @@ def plot_age_pyramid(df: pd.DataFrame, company: str = "") -> Optional[bytes]:
     fig, ax = plt.subplots(figsize=(9, max(4, len(age_order) * 1.2 + 1.5)))
 
     bars_h = ax.barh(age_order, -h_vals, color=HOMME_COLOR, edgecolor="white",
-                     height=0.6, label="Homme", zorder=3)
+                    height=0.6, label="Homme", zorder=3)
     bars_f = ax.barh(age_order, f_vals,  color=FEMME_COLOR, edgecolor="white",
-                     height=0.6, label="Femme", zorder=3)
+                    height=0.6, label="Femme", zorder=3)
 
     def _annotate(bars, vals, ns, side):
         for bar, pct, n in zip(bars, vals, ns):
@@ -120,7 +157,7 @@ def plot_age_pyramid(df: pd.DataFrame, company: str = "") -> Optional[bytes]:
                 continue
             bw  = abs(bar.get_width())
             yc  = bar.get_y() + bar.get_height() / 2
-            lbl = f"{pct:.1f}%\n(n={n})"
+            lbl = f"{pct:.1f}%\n({n})"
             if bw >= seuil:
                 ax.text(bar.get_x() + bar.get_width() / 2, yc, lbl,
                         ha="center", va="center", fontsize=8,
@@ -148,10 +185,10 @@ def plot_age_pyramid(df: pd.DataFrame, company: str = "") -> Optional[bytes]:
         ax.spines[spine].set_color("#D6E8F7")
 
     suffix = f" — {company}" if company else ""
-    ax.set_title(f"Pyramide des âges{suffix}",
-                 fontsize=13, fontweight="bold", color=DARK, pad=14)
+    ax.set_title(f"Répartition par genre et {_label_lower('Tranche_age')}{suffix}",
+                fontsize=13, fontweight="bold", color=DARK, pad=14)
     ax.set_xlabel("% au sein de chaque genre", fontsize=10, color=TEXT_MID)
-    ax.set_ylabel("Tranche d'âge", fontsize=10, color=TEXT_MID)
+    ax.set_ylabel(_label("Tranche_age"), fontsize=10, color=TEXT_MID)
     ax.legend(loc="upper right", fontsize=9, framealpha=0.9)
     fig.tight_layout()
     return _fig_bytes(fig)
@@ -162,7 +199,7 @@ def plot_age_pyramid(df: pd.DataFrame, company: str = "") -> Optional[bytes]:
 # =============================================================================
 
 def plot_categorical(df: pd.DataFrame, col: str,
-                     title: str = "", company: str = "") -> Optional[bytes]:
+                    title: str = "", company: str = "") -> Optional[bytes]:
     """Barplot horizontal d'une variable catégorielle."""
     if col not in df.columns:
         return None
@@ -182,14 +219,16 @@ def plot_categorical(df: pd.DataFrame, col: str,
     for bar, pct, n in zip(bars, pcts, cnt):
         if pct > 0:
             ax.text(bar.get_width() + 0.8, bar.get_y() + bar.get_height() / 2,
-                    f"{pct:.1f}%  (n={n})", va="center", ha="left",
+                    f"{pct:.1f}%  ({n})", va="center", ha="left",
                     fontsize=9, fontweight="bold", color=DARK)
 
     ax.set_xlim(0, min(pcts.max() * 1.35, 120))
-    lbl = title or col
+
+    # Titre professionnel : utilise VAR_LABELS si pas de title custom fourni
+    readable = _label(col) if not title else title
     suffix = f" — {company}" if company else ""
-    _base_style(ax, title=f"Répartition : {lbl}{suffix}",
-                xlabel="Pourcentage (%)", ylabel=lbl)
+    _base_style(ax, title=f"Répartition selon {_label_lower(col)}{suffix}",
+                xlabel="Pourcentage (%)", ylabel=readable)
     fig.tight_layout()
     return _fig_bytes(fig)
 
@@ -199,7 +238,7 @@ def plot_categorical(df: pd.DataFrame, col: str,
 # =============================================================================
 
 def plot_stacked_bar(df: pd.DataFrame, x_col: str, hue_col: str,
-                     company: str = "") -> Optional[bytes]:
+                    company: str = "") -> Optional[bytes]:
     """Barplot empilé 100% pour un croisement de deux variables."""
     if x_col not in df.columns or hue_col not in df.columns:
         return None
@@ -213,12 +252,12 @@ def plot_stacked_bar(df: pd.DataFrame, x_col: str, hue_col: str,
 
     # Couleurs contextuelles
     COLOR_MAP = {**QUAD_COLORS,
-                 "Élevé": GREEN, "Eleve": GREEN, "Faible": RED,
-                 "Satisfaisant": GREEN, "Mitigé": ORANGE, "Insatisfaisant": RED,
-                 "Présent": RED, "Absent": GREEN,
-                 "Bas": GREEN, "Modéré": ORANGE}
+                "Élevé": GREEN, "Eleve": GREEN, "Faible": RED,
+                "Satisfaisant": GREEN, "Mitigé": ORANGE, "Insatisfaisant": RED,
+                "Présent": RED, "Absent": GREEN,
+                "Bas": GREEN, "Modéré": ORANGE}
     colors = [COLOR_MAP.get(str(c), BAR_PALETTE[i % len(BAR_PALETTE)])
-              for i, c in enumerate(cats)]
+            for i, c in enumerate(cats)]
 
     fig_h = max(3.5, len(pct.index) * 0.8 + 2)
     fig, ax = plt.subplots(figsize=(11, fig_h))
@@ -228,24 +267,28 @@ def plot_stacked_bar(df: pd.DataFrame, x_col: str, hue_col: str,
         vals = pct[cat].values
         ns   = ct[cat].values
         bars = ax.barh(list(pct.index), vals, left=left,
-                       color=colors[i], edgecolor="white",
-                       height=0.65, label=str(cat), zorder=3)
+                    color=colors[i], edgecolor="white",
+                    height=0.65, label=str(cat), zorder=3)
         for bar, v, n in zip(bars, vals, ns):
             if v >= 5:
                 xc = bar.get_x() + bar.get_width() / 2
                 yc = bar.get_y() + bar.get_height() / 2
-                ax.text(xc, yc, f"{v:.0f}%\n(n={n})",
+                ax.text(xc, yc, f"{v:.0f}%\n({n})",
                         ha="center", va="center", fontsize=8,
                         fontweight="bold", color="white", zorder=4)
         left += vals
 
     ax.set_xlim(0, 100)
     suffix = f" — {company}" if company else ""
+
+    # Titre professionnel avec libellés lisibles
+    x_readable   = _label_lower(x_col)
+    hue_readable = _label_lower(hue_col)
     _base_style(ax,
-                title=f"{x_col} × {hue_col}{suffix}",
-                xlabel="Pourcentage (%)", ylabel=x_col)
-    ax.legend(title=hue_col, bbox_to_anchor=(1.01, 1), loc="upper left",
-              fontsize=8, title_fontsize=8, framealpha=0.9)
+                title=f"{hue_readable} selon {x_readable}{suffix}",
+                xlabel="Pourcentage (%)", ylabel=_label(x_col))
+    ax.legend(title=_label(hue_col), bbox_to_anchor=(1.01, 1), loc="upper left",
+            fontsize=8, title_fontsize=8, framealpha=0.9)
     fig.tight_layout()
     return _fig_bytes(fig)
 
@@ -260,9 +303,10 @@ def plot_karasek_scatter(df: pd.DataFrame, company: str = "") -> Optional[bytes]
     need = ["Dem_score", "Lat_score", quad_col]
     if any(c not in df.columns for c in need):
         return None
-    data = df[need].dropna()
+    data = df[need].dropna().copy()
     if data.empty:
         return None
+    data[quad_col] = _normalize_quadrants(data[quad_col])
 
     DT = THRESHOLDS["Dem_score"]
     LT = THRESHOLDS["Lat_score"]
@@ -297,9 +341,9 @@ def plot_karasek_scatter(df: pd.DataFrame, company: str = "") -> Optional[bytes]
             continue
         pct = len(sub) / len(data) * 100
         ax.scatter(sub["Dem_score"], sub["Lat_score"],
-                   c=QUAD_COLORS.get(quad, SLATE), s=55, alpha=0.78,
-                   edgecolors="white", linewidths=0.5, zorder=3,
-                   label=f"{qmap_display.get(quad, quad)}  {pct:.1f}%  (n={len(sub)})")
+                c=QUAD_COLORS.get(quad, SLATE), s=55, alpha=0.78,
+                edgecolors="white", linewidths=0.5, zorder=3,
+                label=f"{qmap_display.get(quad, quad)}  {pct:.1f}%  ({len(sub)})")
 
     # Labels quadrants
     for quad, (qx, qy, ha, va) in {
@@ -308,7 +352,7 @@ def plot_karasek_scatter(df: pd.DataFrame, company: str = "") -> Optional[bytes]
         "Tendu":   (xhi - mx * 0.5, ylo + my * 0.5, "right", "bottom"),
         "Passif":  (xlo + mx * 0.5, ylo + my * 0.5, "left",  "bottom"),
     }.items():
-        ax.text(qx, qy, quad.upper(),
+        ax.text(qx, qy, qmap_display.get(quad, quad).upper(),
                 color=QUAD_COLORS.get(quad, SLATE),
                 fontsize=9, fontweight="bold",
                 ha=ha, va=va, alpha=0.4, zorder=2)
@@ -323,11 +367,12 @@ def plot_karasek_scatter(df: pd.DataFrame, company: str = "") -> Optional[bytes]
 
     suffix = f" — {company}" if company else ""
     ax.set_title(f"Grille MAPP — Demande × Latitude décisionnelle{suffix}",
-                 fontsize=13, fontweight="bold", color=DARK, pad=14)
-    ax.set_xlabel("Demande psychologique", fontsize=10, color=TEXT_MID)
-    ax.set_ylabel("Latitude décisionnelle", fontsize=10, color=TEXT_MID)
-    ax.legend(title="Quadrant de Karasek", bbox_to_anchor=(1.01, 1),
-              loc="upper left", fontsize=8, title_fontsize=9, framealpha=0.9)
+                fontsize=13, fontweight="bold", color=DARK, pad=14)
+    ax.set_xlabel(_label("Dem_score_theo_cat"), fontsize=10, color=TEXT_MID)
+    ax.set_ylabel(_label("Lat_score_theo_cat"), fontsize=10, color=TEXT_MID)
+    ax.legend(title=_label("Karasek_quadrant_theoretical"),
+            bbox_to_anchor=(1.01, 1),
+            loc="upper left", fontsize=8, title_fontsize=9, framealpha=0.9)
     fig.tight_layout()
     return _fig_bytes(fig)
 
@@ -340,11 +385,16 @@ def plot_karasek_heatmap(df: pd.DataFrame, company: str = "") -> Optional[bytes]
     """Heatmap des quadrants Karasek par direction."""
     quad_col = "Karasek_quadrant_theoretical"
     dir_col  = next((c for c in df.columns
-                     if c.strip().lower() == "direction"), None)
+                    if c.strip().lower() == "direction"), None)
     if not dir_col or quad_col not in df.columns:
         return None
 
-    ct = pd.crosstab(df[dir_col], df[quad_col], normalize="index") * 100
+    tmp = df[[dir_col, quad_col]].dropna().copy()
+    if tmp.empty:
+        return None
+    tmp[quad_col] = _normalize_quadrants(tmp[quad_col])
+
+    ct = pd.crosstab(tmp[dir_col], tmp[quad_col], normalize="index") * 100
     quads = ["Tendu", "Actif", "Passif", "Detendu"]
     for q in quads:
         if q not in ct.columns:
@@ -358,7 +408,7 @@ def plot_karasek_heatmap(df: pd.DataFrame, company: str = "") -> Optional[bytes]
         "Detendu": ["#FFFFFF", GREEN],
     }
     quad_labels = {"Tendu": "Tendu", "Actif": "Actif",
-                   "Passif": "Passif", "Detendu": "Détendu"}
+                "Passif": "Passif", "Detendu": "Détendu"}
 
     fig_h = max(3, 1 + len(ct) * 0.45)
     fig, axes = plt.subplots(1, 4, figsize=(18, fig_h), sharey=True)
@@ -371,17 +421,21 @@ def plot_karasek_heatmap(df: pd.DataFrame, company: str = "") -> Optional[bytes]
                     annot_kws={"size": 9, "weight": "bold", "color": DARK},
                     linewidths=0.5, linecolor="#F0F7FF", cbar=False)
         ax.set_title(quad_labels[q], fontsize=11, fontweight="bold",
-                     color=cmaps[q][1], pad=6)
+                    color=cmaps[q][1], pad=6)
         ax.set_xlabel("%", fontsize=8, color=TEXT_MID)
-        ax.set_ylabel("" if q != "Tendu" else "Direction", fontsize=9)
+        ax.set_ylabel("" if q != "Tendu" else _label("Direction"),
+                    fontsize=9)
         ax.tick_params(axis="y", labelsize=8, colors=TEXT_MID)
         ax.tick_params(axis="x", bottom=False, labelbottom=False)
         for spine in ax.spines.values():
             spine.set_visible(False)
 
     suffix = f" — {company}" if company else ""
-    fig.suptitle(f"Répartition Karasek par Direction{suffix} (trié par tension ↑)",
-                 fontsize=12, fontweight="bold", color=DARK, y=1.02)
+    fig.suptitle(
+        f"Répartition {_label_lower('Karasek_quadrant_theoretical')} "
+        f"selon {_label_lower('Direction')}{suffix} (trié par tension ↑)",
+        fontsize=12, fontweight="bold", color=DARK, y=1.02
+    )
     fig.tight_layout()
     return _fig_bytes(fig)
 
@@ -423,7 +477,7 @@ def plot_rh_radar(df: pd.DataFrame, metrics: dict, company: str = "") -> Optiona
     ax.plot(angles_c, vals_c, color=ACCENT, linewidth=2.2, zorder=3)
     ax.fill(angles, vals, color=ACCENT, alpha=0.15, zorder=2)
     ax.scatter(angles, vals, color=ACCENT, s=50, zorder=4,
-               edgecolors="white", linewidths=1.5)
+            edgecolors="white", linewidths=1.5)
 
     ax.set_xticks(angles)
     ax.set_xticklabels(
@@ -438,17 +492,17 @@ def plot_rh_radar(df: pd.DataFrame, metrics: dict, company: str = "") -> Optiona
     ax.spines["polar"].set_color("#D6E8F7")
 
     suffix = f" — {company}" if company else ""
-    ax.set_title(f"Radar des dimensions organisationnelles{suffix}\n(% niveau élevé)",
-                 fontsize=11, fontweight="bold", color=DARK, pad=22)
+    ax.set_title(f"Profil des dimensions organisationnelles{suffix}\n(% niveau élevé)",
+                fontsize=11, fontweight="bold", color=DARK, pad=22)
 
     # Légende manuelle
     handles = [
         mpatches.Patch(color=ACCENT, alpha=0.7, label="Score observé"),
         plt.Line2D([0], [0], color=ORANGE, linestyle="--", linewidth=1.2,
-                   label="Référence 50%"),
+                label="Référence 50%"),
     ]
     ax.legend(handles=handles, loc="lower right",
-              bbox_to_anchor=(1.25, -0.05), fontsize=8, framealpha=0.9)
+            bbox_to_anchor=(1.25, -0.05), fontsize=8, framealpha=0.9)
 
     fig.tight_layout()
     return _fig_bytes(fig)
@@ -461,8 +515,8 @@ def plot_rh_radar(df: pd.DataFrame, metrics: dict, company: str = "") -> Optiona
 def plot_strain_bars(df: pd.DataFrame, company: str = "") -> Optional[bytes]:
     """Barplot horizontal Job Strain + Iso-Strain + quadrants."""
     strain_cols = {
-        "Job Strain":  "Job_strain_theoretical",
-        "Iso-Strain":  "Iso_strain_theoretical",
+        _label("Job_strain_theoretical"):  "Job_strain_theoretical",
+        _label("Iso_strain_theoretical"):  "Iso_strain_theoretical",
     }
     quad_col = "Karasek_quadrant_theoretical"
 
@@ -474,12 +528,13 @@ def plot_strain_bars(df: pd.DataFrame, company: str = "") -> Optional[bytes]:
             rows.append({"label": label, "pct": n / len(v) * 100 if len(v) else 0, "n": n})
 
     if quad_col in df.columns:
-        v = df[quad_col].dropna()
+        v = _normalize_quadrants(df[quad_col].dropna())
         tv = len(v)
         for quad, color in [("Tendu", RED), ("Actif", GREEN),
-                             ("Passif", SLATE), ("Detendu", ACCENT)]:
-            n = int(v.isin([quad, f"Dé{quad[1:]}" if quad == "Detendu" else quad]).sum())
-            rows.append({"label": quad, "pct": n / tv * 100 if tv else 0, "n": n})
+                            ("Passif", SLATE), ("Detendu", ACCENT)]:
+            label = "Détendu" if quad == "Detendu" else quad
+            n = int((v == quad).sum())
+            rows.append({"label": label, "pct": n / tv * 100 if tv else 0, "n": n})
 
     if not rows:
         return None
@@ -489,24 +544,31 @@ def plot_strain_bars(df: pd.DataFrame, company: str = "") -> Optional[bytes]:
     pcts   = df_r["pct"].tolist()
     ns     = df_r["n"].tolist()
 
-    color_map = {"Job Strain": RED, "Iso-Strain": ORANGE,
-                 "Actif": GREEN, "Detendu": ACCENT,
-                 "Tendu": RED,   "Passif": SLATE}
+    # Map couleurs sur les libellés lisibles
+    job_strain_lbl = _label("Job_strain_theoretical")
+    iso_strain_lbl = _label("Iso_strain_theoretical")
+    color_map = {
+        job_strain_lbl: RED,
+        iso_strain_lbl: ORANGE,
+        "Actif": GREEN, "Detendu": ACCENT, "Détendu": ACCENT,
+        "Tendu": RED,   "Passif": SLATE,
+    }
     colors = [color_map.get(l, ACCENT) for l in labels]
 
     fig, ax = plt.subplots(figsize=(9, max(3, len(labels) * 0.75 + 1.2)))
     bars = ax.barh(labels, pcts, color=colors, edgecolor="white",
-                   height=0.55, zorder=3)
+                height=0.55, zorder=3)
     for bar, pct, n in zip(bars, pcts, ns):
         ax.text(bar.get_width() + 0.8,
                 bar.get_y() + bar.get_height() / 2,
-                f"{pct:.1f}%  (n={n})",
+                f"{pct:.1f}%  ({n})",
                 va="center", ha="left", fontsize=9,
                 fontweight="bold", color=DARK)
 
     ax.set_xlim(0, min(max(pcts) * 1.4, 110))
     suffix = f" — {company}" if company else ""
-    _base_style(ax, title=f"Prévalence des RPS & Quadrants Karasek{suffix}",
+    _base_style(ax,
+                title=f"Prévalence des risques psychosociaux & {_label_lower('Karasek_quadrant_theoretical')}{suffix}",
                 xlabel="Pourcentage (%)")
     # Ligne de référence 25%
     ax.axvline(25, color=ORANGE, linestyle=":", linewidth=1.2, alpha=0.5)
@@ -542,13 +604,21 @@ class KarasekVisualizations:
             "strain_bars":         lambda: plot_strain_bars(df, self.company),
             "genre_barplot":       lambda: plot_categorical(df, "Genre", "Genre", self.company),
             "tranche_age_barplot": lambda: plot_categorical(df, "Tranche_age", "Tranche d'âge", self.company),
-            "direction_barplot":   lambda: plot_categorical(df, "Direction", "Direction", self.company) if "Direction" in df.columns else None,
             "csp_barplot":         lambda: plot_categorical(
                 df,
                 next((c for c in df.columns if "socio" in c.lower() or c == "CSP"), ""),
                 "Catégorie socioprofessionnelle", self.company
             ) if any("socio" in c.lower() or c == "CSP" for c in df.columns) else None,
         }
+        for x_col in ALL_CROSSTABS:
+            key = f"{x_col[0]}_by_{x_col[1]}_stacked"
+            actual_x = _resolve_column(df, x_col[0])
+            actual_hue = _resolve_column(df, x_col[1])
+            generators[key] = (
+                lambda actual_x=actual_x, actual_hue=actual_hue:
+                    plot_stacked_bar(df, actual_x, actual_hue, self.company)
+                    if actual_x and actual_hue else None
+            )
 
         results = {}
         for name, fn in generators.items():

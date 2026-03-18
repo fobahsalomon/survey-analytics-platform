@@ -11,7 +11,8 @@ import pandas as pd
 class BaseQuestionnaire(ABC):
     """
     Interface commune à tous les questionnaires.
-    Chaque questionnaire doit implémenter ces méthodes.
+    Chaque questionnaire doit implémenter ces méthodes pour rester compatible
+    avec les pages Streamlit, les analytics, les visualisations et le reporting.
     """
 
     @abstractmethod
@@ -35,7 +36,14 @@ class BaseQuestionnaire(ABC):
         ...
 
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Pipeline complet : clean → score → classify."""
+        """
+        Pipeline complet standard.
+
+        L'idée est simple :
+        1. nettoyer les données brutes ;
+        2. calculer les scores ;
+        3. transformer ces scores en catégories lisibles.
+        """
         df = self.clean(df)
         df = self.score(df)
         df = self.classify(df)

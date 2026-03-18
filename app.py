@@ -5,6 +5,8 @@ Hub central de navigation vers les trois questionnaires.
 
 import streamlit as st
 
+# La page d'accueil ne fait aucun calcul métier.
+# Elle sert uniquement de porte d'entrée visuelle vers les trois modules.
 st.set_page_config(
     page_title="SurveyLens · Bien-être au Travail",
     page_icon="🧠",
@@ -88,6 +90,8 @@ html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; color
 </style>
 """, unsafe_allow_html=True)
 
+# Le HTML suivant construit la page "hub" sans dépendre d'un composant Streamlit
+# complexe. Cela permet de garder un rendu très contrôlé pour l'écran d'accueil.
 st.markdown("""
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -133,6 +137,7 @@ st.markdown("""
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
+# Les trois boutons redirigent vers les pages Streamlit spécialisées.
 col1, col2, col3 = st.columns(3)
 with col1:
     if st.button("Ouvrir Karasek DCS →", key="nav_karasek", use_container_width=True):

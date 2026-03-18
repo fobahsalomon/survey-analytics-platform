@@ -1,109 +1,250 @@
-# SurveyLens — Plateforme d'analyse des risques psychosociaux
+# SurveyLens
 
-Dashboard multi-questionnaires pour l'analyse du bien-être au travail.
+SurveyLens est une application Streamlit d'analyse de questionnaires RH et RPS.
 
----
+Le projet permet de :
+- charger un fichier CSV ou Excel ;
+- nettoyer les données ;
+- calculer des scores questionnaire par questionnaire ;
+- produire des indicateurs agrégés ;
+- afficher un dashboard interactif ;
+- générer un rapport Word et un export ZIP avec les figures.
+
+Le dépôt contient actuellement 3 modules d'analyse :
+- `Karasek` : stress au travail, Job Strain, Iso-Strain, quadrants ;
+- `QVT` : qualité de vie au travail ;
+- `MBI` : burnout selon le Maslach Burnout Inventory.
+
+## À quoi sert le projet
+
+L'application sert de couche de présentation au-dessus d'un moteur d'analyse.
+
+Le principe est toujours le même :
+1. l'utilisateur charge un fichier ;
+2. le fichier est converti en `DataFrame` pandas ;
+3. le pipeline du questionnaire nettoie, score et classe les réponses ;
+4. les analytics produisent les KPI et distributions ;
+5. les visualisations et le reporting utilisent ces résultats ;
+6. le dashboard affiche le tout dans Streamlit.
 
 ## Structure du projet
 
-```
-SurveyLens/
-├── app.py                          # Page d'accueil (hub de navigation)
+```text
+survey-analytics-platform/
+├── app.py
+├── README.md
+├── architecture.md
 ├── requirements.txt
-├── .streamlit/
-│   └── config.toml                 # Thème SurveyLens
-│
 ├── pages/
-│   ├── _ui_shared.py               # Composants UI partagés (CSS, jauges, charts)
-│   ├── 1_karasek.py                # Dashboard Karasek DCS
-│   ├── 2_qvt.py                    # Dashboard QVT
-│   └── 3_mbi.py                    # Dashboard MBI Burnout
-│
+│   ├── 1_karasek.py
+│   ├── 2_qvt.py
+│   ├── 3_mbi.py
+│   ├── _ui_shared.py
+│   └── _export_utils.py
 └── lib/
     ├── common/
-    │   ├── base_questionnaire.py   # Interface abstraite (ABC)
-    │   ├── common_cleaning.py      # Nettoyage PII, socio-démo, Likert
-    │   └── file_utils.py           # Chargement CSV / Excel
-    │
+    │   ├── __init__.py
+    │   ├── base_questionnaire.py
+    │   ├── common_cleaning.py
+    │   └── file_utils.py
     ├── data/
-    │   ├── sample_karasek.csv      # Données de test Karasek
-    │   ├── sample_qvt.csv          # Données de test QVT
-    │   └── sample_mbi.csv          # Données de test MBI
-    │
+    │   ├── sample_karasek1.csv
+    │   ├── sample_karasek2.csv
+    │   ├── sample_qvt.csv
+    │   └── sample_mbi.csv
     └── questionnaires/
         ├── karasek/
-        │   ├── config.py           # Seuils, mappings, couleurs
-        │   ├── questionnaire.py    # Pipeline clean → score → classify
-        │   ├── analytics.py        # Indicateurs agrégés
-        │   └── reporting.py        # Export Word (.docx)
         ├── qvt/
-        │   └── (même structure)
         └── mbi/
-            └── (même structure)
 ```
 
----
+## Rôle des dossiers
+
+### `app.py`
+
+Page d'accueil.
+
+Elle ne calcule pas de scores. Elle sert uniquement de hub de navigation vers les trois dashboards.
+
+### `pages/`
+
+Contient les pages Streamlit.
+
+Chaque page questionnaire :
+- gère l'upload ;
+- exécute le pipeline ;
+- applique les filtres ;
+- affiche les KPI, graphiques et tableaux ;
+- pilote l'export Word et ZIP.
+
+Les deux fichiers spéciaux sont :
+- `pages/_ui_shared.py` : composants UI réutilisables ;
+- `pages/_export_utils.py` : logique ZIP et boutons de téléchargement.
+
+### `lib/common/`
+
+Contient le socle partagé :
+- lecture de fichiers ;
+- nettoyage commun ;
+- enrichissement socio-démographique ;
+- interface abstraite des questionnaires.
+
+### `lib/questionnaires/`
+
+Chaque sous-dossier suit la même idée :
+- `config.py` : constantes, seuils, mappings, labels, couleurs ;
+- `questionnaire.py` : pipeline principal ;
+- `analytics.py` : calculs agrégés pour le dashboard ;
+- `visualizations.py` : figures PNG ;
+- `reporting.py` : génération du document Word.
+
+## Pipeline technique
+
+Le flux principal est :
+
+```text
+Fichier brut
+  -> load_dataframe(...)
+  -> Questionnaire.clean(...)
+  -> Questionnaire.score(...)
+  -> Questionnaire.classify(...)
+  -> Questionnaire.analytics(...)
+  -> Visualizations.generate_all(...)
+  -> Reporting.generate(...)
+```
 
 ## Installation
 
-```fish
-# Cloner / copier le dossier SurveyLens
-cd SurveyLens
+### Prérequis
 
-# Installer les dépendances (fish shell)
-pip install -r requirements.txt --break-system-packages
+- Python 3.11 ou plus récent recommandé
+- `pip`
 
-# Lancer l'application
+### Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+### Lancement
+
+```bash
 streamlit run app.py
 ```
 
----
+## Dépendances importantes
 
-## Questionnaires
+- `streamlit` : interface web
+- `pandas` : manipulation des données
+- `numpy` : calcul numérique
+- `plotly` : graphiques interactifs
+- `matplotlib` et `seaborn` : figures exportées en PNG
+- `python-docx` : génération des rapports Word
 
-### Karasek DCS
-Modèle Demande–Contrôle–Soutien (Karasek & Theorell).
-- Seuils **théoriques uniquement** (point médian de l'échelle Likert 1–4)
-- Quadrants : Actif / Détendu / Tendu / Passif
-- Indicateurs : Job Strain, Iso-Strain, scores RH
-- Fichier test : `lib/data/sample_karasek.csv`
+## Fichiers d'exemple
+
+Des jeux de données d'exemple sont présents dans [lib/data](/home/fobah-salomon/OneDrive/workspace/GitHub/survey-analytics-platform/lib/data).
+
+Ils servent à :
+- tester rapidement l'application ;
+- comprendre le format attendu ;
+- valider les visualisations et les rapports.
+
+## Gestion des données
+
+Le projet supprime automatiquement certaines colonnes sensibles ou inutiles :
+- nom ;
+- prénom ;
+- email ;
+- téléphone ;
+- colonnes vides ou quasi vides.
+
+Le projet enrichit aussi les données quand c'est possible :
+- tranche d'âge ;
+- tranche d'ancienneté ;
+- IMC ;
+- catégories dérivées utiles aux tableaux croisés.
+
+Quand un fichier ne contient pas `Age` mais contient une tranche d'âge, le projet sait maintenant estimer l'âge moyen et filtrer sur l'âge à partir de cette tranche.
+
+## Questionnaires pris en charge
+
+### Karasek
+
+But :
+- mesurer la demande psychologique ;
+- la latitude décisionnelle ;
+- le soutien social ;
+- les zones de tension au travail.
+
+Sorties clés :
+- quadrants Karasek ;
+- Job Strain ;
+- Iso-Strain ;
+- scores RH complémentaires.
 
 ### QVT
-Qualité de Vie au Travail — cadre ANACT / ANI 2013.
-- 6 dimensions : Relations, Contenu, Environnement, Organisation, Développement, Équilibre
-- Échelle Likert 1–5
-- Fichier test : `lib/data/sample_qvt.csv`
 
-### MBI Burnout
-Maslach Burnout Inventory — General Survey (MBI-GS), Schaufeli et al. 1996.
-- 3 dimensions : Épuisement, Cynisme, Efficacité personnelle
-- Échelle de fréquence 0–6
-- Score composite de risque burnout
-- Fichier test : `lib/data/sample_mbi.csv`
+But :
+- mesurer le bien-être organisationnel sur plusieurs dimensions.
 
----
+Sorties clés :
+- score global QVT ;
+- distribution par dimension ;
+- répartition satisfaisant / mitigé / insatisfaisant.
 
-## Export Word
+### MBI
 
-Chaque page dashboard contient dans la sidebar un bouton **"Générer rapport Word"**.
-Saisir le nom de l'organisation, cliquer, puis télécharger le `.docx` généré.
+But :
+- mesurer le risque de burnout.
 
-Requiert : `python-docx>=1.1.0`
+Sorties clés :
+- épuisement ;
+- cynisme ;
+- efficacité personnelle ;
+- risque de burnout composite.
 
----
+## Reporting et exports
+
+Chaque page peut produire :
+- un rapport Word `.docx` ;
+- un ZIP contenant le rapport et toutes les figures PNG.
+
+Le reporting s'appuie sur les métriques agrégées déjà calculées. Il ne recalcule pas la logique métier depuis zéro.
 
 ## Ajouter un nouveau questionnaire
 
-1. Créer `lib/questionnaires/mon_questionnaire/`
-2. Implémenter les 4 fichiers : `config.py`, `questionnaire.py`, `analytics.py`, `reporting.py`
-3. La classe principale doit hériter de `lib.common.BaseQuestionnaire`
-4. Créer `pages/N_mon_questionnaire.py` en utilisant `_ui_shared.py`
-5. Ajouter la carte dans `app.py`
+La manière la plus simple est de copier la structure d'un module existant.
 
----
+Étapes :
+1. créer `lib/questionnaires/mon_module/` ;
+2. ajouter `config.py` ;
+3. ajouter `questionnaire.py` ;
+4. ajouter `analytics.py` ;
+5. ajouter `visualizations.py` si nécessaire ;
+6. ajouter `reporting.py` ;
+7. créer une page Streamlit dans `pages/`.
 
-## Notes
+La classe questionnaire doit hériter de `BaseQuestionnaire`.
 
-- Tous les seuils sont **théoriques et non cliniques**
-- Les données PII (nom, email, téléphone) sont automatiquement supprimées au chargement
-- Compatible fish shell (pas de scripts bash `source`)
+## Philosophie du code
+
+Le projet sépare volontairement :
+- la logique métier ;
+- la présentation ;
+- l'export ;
+- les constantes.
+
+Cette séparation permet :
+- de modifier les seuils sans toucher au dashboard ;
+- de changer l'UI sans casser les calculs ;
+- de réutiliser les mêmes métriques pour les graphiques et les rapports.
+
+## Documentation complémentaire
+
+Le fichier [architecture.md](/home/fobah-salomon/OneDrive/workspace/GitHub/survey-analytics-platform/architecture.md) décrit en détail :
+- les couches du projet ;
+- le rôle de chaque fichier important ;
+- le cycle de vie complet d'une donnée ;
+- la logique de chaque questionnaire ;
+- les conventions de développement.

@@ -16,6 +16,7 @@ EXCEL_SIGNATURES = (
 
 
 def _read_csv_buffer(buf: io.BytesIO, encoding_fallback: str) -> pd.DataFrame:
+    """Lit un CSV en essayant d'abord UTF-8, puis un encodage de secours."""
     buf.seek(0)
     try:
         return pd.read_csv(buf, sep=None, engine="python", encoding="utf-8-sig")
@@ -25,10 +26,17 @@ def _read_csv_buffer(buf: io.BytesIO, encoding_fallback: str) -> pd.DataFrame:
 
 
 def _looks_like_excel(raw: bytes) -> bool:
+    """Détecte un fichier Excel via sa signature binaire."""
     return raw.startswith(EXCEL_SIGNATURES)
 
 
 def _looks_like_csv(raw: bytes, encoding_fallback: str) -> bool:
+    """
+    Détecte un CSV de manière heuristique.
+
+    Le but n'est pas d'être parfait, mais d'éviter de traiter comme CSV
+    un binaire arbitraire ou un fichier vide.
+    """
     sample = raw[:4096]
     if not sample or b"\x00" in sample:
         return False
@@ -63,7 +71,8 @@ def load_dataframe(source, file_name: str | None = None, encoding_fallback: str 
 
     Supporte CSV (auto-détection séparateur) et Excel.
     """
-    # Résolution de la source
+    # On normalise la source en bytes bruts pour avoir ensuite un seul chemin
+    # de traitement, quel que soit l'appelant.
     if isinstance(source, (str, Path)):
         path = Path(source)
         name = file_name or path.name
@@ -80,6 +89,8 @@ def load_dataframe(source, file_name: str | None = None, encoding_fallback: str 
 
     ext = Path(name).suffix.lower()
 
+    # Priorité 1 : extension explicite.
+    # Priorité 2 : détection heuristique si l'extension n'aide pas.
     if ext == ".csv":
         df = _read_csv_buffer(buf, encoding_fallback)
     elif ext in {".xlsx", ".xls", ".xlsm", ".xlsb", ".ods"}:
@@ -92,6 +103,7 @@ def load_dataframe(source, file_name: str | None = None, encoding_fallback: str 
         else:
             raise ValueError("Format de fichier non reconnu. Utilisez un fichier CSV ou Excel valide.")
 
+    # Nettoyage minimal des noms de colonnes dès le chargement.
     df.columns = [str(c).strip() for c in df.columns]
     return df
 

@@ -12,6 +12,8 @@ from lib.common import (
     clip_likert, invert_items, compute_group_score,
     normalize_text,
 )
+from lib.common.common_cleaning import remap_age_tranche
+
 from .config import (
     LIKERT_MIN, LIKERT_MAX, THRESHOLDS,
     RENAME_MAPPING, INVERT_ITEMS, SCORE_MULTIPLIERS, RH_SCORE_GROUPS,
@@ -41,25 +43,36 @@ class KarasekQuestionnaire(BaseQuestionnaire):
     """
 
     def clean(self, df: pd.DataFrame) -> pd.DataFrame:
+        # Cette étape prépare le fichier avant tout calcul :
+        # suppression de colonnes sensibles, enrichissement socio-démo,
+        # harmonisation éventuelle des tranches d'âge.
         df, _ = clean_pii(df)
         df = enrich_sociodem(df)
+        if "Tranche d’âge" in df.columns:
+            df = remap_age_tranche(df, "Tranche d’âge")
         return df
 
     def score(self, df: pd.DataFrame) -> pd.DataFrame:
         df_out = df.copy()
 
         # 1. Renommage des colonnes questions
+        # On essaye de faire correspondre les libellés du fichier source aux
+        # codes internes attendus par le moteur (`Q1_dem`, `Q2_auto`, etc.).
         df_out = _fuzzy_rename(df_out)
 
         # 2. Nettoyage Likert
+        # Toutes les réponses sont converties en valeurs numériques propres.
         lk_cols = [c for c in df_out.columns if ITEM_PATTERN.match(c)]
         for col in lk_cols:
             df_out[col] = clip_likert(df_out[col], LIKERT_MIN, LIKERT_MAX)
 
         # 3. Inversion des items négatifs
+        # Certaines questions sont formulées à l'envers et doivent être
+        # inversées pour que le sens du score reste cohérent.
         df_out = invert_items(df_out, INVERT_ITEMS, LIKERT_MIN, LIKERT_MAX)
 
         # 4. Scores Karasek principaux
+        # On calcule les briques de base du modèle avant les scores composites.
         for g, mult in SCORE_MULTIPLIERS.items():
             col_name = f"{g}_score"
             computed = compute_group_score(df_out, g, multiplier=mult)
@@ -69,6 +82,8 @@ class KarasekQuestionnaire(BaseQuestionnaire):
                 df_out[col_name] = np.nan
 
         # 5. Scores composites
+        # Ces scores résument plusieurs sous-dimensions en indicateurs métiers
+        # plus directement interprétables dans le dashboard et le rapport.
         comp_cols = [c for c in ["comp_score", "auto_score"] if c in df_out.columns]
         ss_cols = [c for c in ["sup_score", "col_score"] if c in df_out.columns]
 
@@ -82,6 +97,8 @@ class KarasekQuestionnaire(BaseQuestionnaire):
             df_out["SS_score"] = sum(df_out[c] for c in ss_cols) if ss_cols else np.nan
 
         # 6. Scores RH
+        # Ces scores supplémentaires enrichissent la lecture du climat
+        # organisationnel autour du noyau Karasek.
         for g in RH_SCORE_GROUPS:
             col_name = f"{g}_score"
             computed = compute_group_score(df_out, g, multiplier=1)

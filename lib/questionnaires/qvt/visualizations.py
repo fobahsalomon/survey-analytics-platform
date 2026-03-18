@@ -23,11 +23,13 @@ CAT_COLORS={"Satisfaisant":GREEN,"Mitigé":ORANGE,"Insatisfaisant":RED}
 HOMME_C="#4472C4"; FEMME_C="#E91E8C"
 
 def _fig_bytes(fig):
+    """Sérialise une figure Matplotlib en PNG puis la ferme."""
     buf=io.BytesIO()
     fig.savefig(buf,format="png",dpi=150,bbox_inches="tight",facecolor=fig.get_facecolor())
     plt.close(fig); buf.seek(0); return buf.read()
 
 def _base(ax,title="",xlabel="",ylabel="",wrap=58):
+    """Applique le style graphique partagé des visualisations QVT."""
     ax.set_facecolor(BG); ax.figure.patch.set_facecolor("white")
     ax.grid(True,color=GRID_C,linewidth=0.8,axis="x",zorder=0); ax.set_axisbelow(True)
     for s in ["top","right"]: ax.spines[s].set_visible(False)
@@ -39,6 +41,7 @@ def _base(ax,title="",xlabel="",ylabel="",wrap=58):
 
 
 def plot_qvt_radar(df, metrics, company=""):
+    """Produit le radar des dimensions QVT basé sur le pourcentage satisfaisant."""
     dims=metrics.get("dimensions",{})
     if not dims: return None
     labels=[d["label"] for d in dims.values()]
@@ -72,6 +75,7 @@ def plot_qvt_radar(df, metrics, company=""):
 
 
 def plot_qvt_bars(df, metrics, company=""):
+    """Produit des barres groupées par dimension et catégorie QVT."""
     dims=metrics.get("dimensions",{}); 
     if not dims: return None
     dim_labels=[d["label"] for d in dims.values()]
@@ -98,6 +102,7 @@ def plot_qvt_bars(df, metrics, company=""):
 
 
 def plot_qvt_heatmap(df, company=""):
+    """Produit une heatmap des scores moyens QVT par direction."""
     dir_col=next((c for c in df.columns if c.strip().lower()=="direction"),None)
     dim_cols=[f"{d}_score" for d in DIMENSIONS if f"{d}_score" in df.columns]
     if not dir_col or not dim_cols: return None
@@ -123,6 +128,7 @@ def plot_qvt_heatmap(df, company=""):
 
 
 def plot_qvt_global_dist(df, metrics, company=""):
+    """Produit l'histogramme de distribution du score QVT global."""
     if "qvt_global_score" not in df.columns: return None
     vals=pd.to_numeric(df["qvt_global_score"],errors="coerce").dropna()
     if vals.empty: return None
@@ -141,6 +147,7 @@ def plot_qvt_global_dist(df, metrics, company=""):
 
 
 def plot_age_pyramid(df, company=""):
+    """Produit une pyramide des âges Homme/Femme à partir des tranches d'âge."""
     if "Tranche_age" not in df.columns or "Genre" not in df.columns: return None
     data=df[["Tranche_age","Genre"]].dropna()
     if data.empty: return None
@@ -182,10 +189,13 @@ def plot_age_pyramid(df, company=""):
 
 
 class QVTVisualizations:
+    """Orchestre la génération des visuels QVT exportables."""
     def __init__(self, company=""):
+        """Mémorise le nom de l'organisation pour les titres de figures."""
         self.company = company
 
     def generate_all(self, df, metrics) -> Dict[str, bytes]:
+        """Génère toutes les figures QVT disponibles sous forme de PNG bytes."""
         generators = {
             "qvt_radar":       lambda: plot_qvt_radar(df, metrics, self.company),
             "qvt_bars":        lambda: plot_qvt_bars(df, metrics, self.company),
@@ -203,4 +213,5 @@ class QVTVisualizations:
         return results
 
     def generate_for_report(self, df, metrics) -> Dict[str, bytes]:
+        """Retourne les figures QVT destinées au rapport Word."""
         return self.generate_all(df, metrics)
