@@ -1,22 +1,122 @@
+# SurveyLens
 
-# [SurveyLens](https://surveylens.streamlit.app/)
+SurveyLens is a **survey intelligence system** that transforms raw HR and psychosocial questionnaires into structured, actionable insights for decision-making.
 
-SurveyLens is a Streamlit application for analyzing HR and psychosocial risk (RPS) questionnaires.
+It combines **data processing, psychological scoring models, and interactive analytics dashboards** into a single end-to-end pipeline.
 
-The project allows you to:
-- load a CSV or Excel file;
-- clean the data;
-- calculate questionnaire-specific scores;
-- generate aggregated indicators;
-- display an interactive dashboard;
-- generate a Word report and a ZIP export containing all figures.
+🔗 Live demo: https://surveylens.streamlit.app/
 
-The repository currently includes 3 analysis modules:
-- `Karasek`: workplace stress, Job Strain, Iso-Strain, quadrants;
-- `QVT`: Quality of Life at Work (Qualité de Vie au Travail);
-- `MBI`: burnout assessment using the Maslach Burnout Inventory.
+---
 
-### 🛠 Tech Stack
+## 📌 Problem
+
+Survey data from HR and field research is often:
+
+- fragmented and inconsistently formatted  
+- manually processed in spreadsheets  
+- difficult to interpret at scale  
+- slow to convert into actionable insights  
+
+This leads to delays and underutilization of critical organizational data.
+
+---
+
+## 💡 Solution
+
+SurveyLens automates the full pipeline from raw data to insights:
+
+- standardized data ingestion (CSV / Excel)
+- automated cleaning and validation
+- questionnaire-specific scoring engines
+- KPI computation and aggregation
+- interactive dashboards for exploration
+- exportable reports (Word + figures + ZIP)
+
+The system is designed to support **data-driven decision-making in HR, research, and field studies**.
+
+---
+
+## 🏗 Architecture
+
+SurveyLens is structured as a modular analytics pipeline:
+
+```
+
+Raw Data
+↓
+Ingestion Layer (file upload & parsing)
+↓
+Processing Layer (cleaning & validation)
+↓
+Scoring Engine (Karasek, QVT, MBI)
+↓
+Analytics Layer (KPIs, aggregation, segmentation)
+↓
+Visualization Layer (Streamlit dashboards)
+↓
+Export Layer (Word reports + figures + ZIP)
+
+````
+
+### Codebase structure
+
+- `app.py` → navigation hub (no business logic)
+- `pages/` → Streamlit interfaces per questionnaire
+- `lib/common/` → shared utilities and abstractions
+- `lib/questionnaires/` → modular scoring engines per model
+
+This separation ensures **reproducibility, scalability, and maintainability**.
+
+---
+
+## 🎯 Use Cases
+
+SurveyLens is designed for:
+
+- HR departments analyzing employee well-being
+- NGOs conducting field surveys
+- Academic researchers in psychology / sociology
+- Public health and organizational studies
+
+---
+
+## ⚙️ Key Features
+
+- Multi-format data ingestion (CSV, Excel)
+- Automated preprocessing and feature engineering
+- Psychological scoring models:
+  - Karasek (job strain, decision latitude)
+  - QVT (quality of work life)
+  - MBI (burnout risk)
+- Interactive dashboards (Streamlit + Plotly)
+- Dynamic filtering and segmentation
+- Automated report generation (Word + visual exports)
+- ZIP export of complete analysis results
+
+---
+
+## 🧠 Supported Models
+
+### Karasek Model
+Measures job strain through:
+- psychological demand
+- decision latitude
+- social support
+→ outputs: job strain zones, iso-strain risk
+
+### QVT (Quality of Work Life)
+Assesses organizational well-being across multiple dimensions  
+→ outputs: global QVT score + distributions
+
+### MBI (Maslach Burnout Inventory)
+Evaluates burnout risk:
+- emotional exhaustion
+- depersonalization
+- professional efficacy
+
+---
+
+## 🛠 Tech Stack
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)
@@ -25,237 +125,48 @@ The repository currently includes 3 analysis modules:
 ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=flat&logo=plotly&logoColor=white)
 ![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?style=flat&logo=python&logoColor=white)
 ![Seaborn](https://img.shields.io/badge/Seaborn-3776AB?style=flat&logo=python&logoColor=white)
+![Statsmodels](https://img.shields.io/badge/Statsmodels-003B57?style=flat)
 ![python-docx](https://img.shields.io/badge/python--docx-0078D4?style=flat&logo=microsoft-word&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-F05032?style=flat&logo=git&logoColor=white)
 
-## Project Purpose
+---
 
-The application serves as a presentation layer on top of a core analysis engine.
+## 📊 Technical Highlights
 
-The workflow is consistent:
-1. The user uploads a file;
-2. The file is converted into a pandas DataFrame;
-3. The questionnaire pipeline cleans, scores, and classifies responses;
-4. Analytics compute KPIs and distributions;
-5. Visualizations and reporting consume these results;
-6. The dashboard renders everything in Streamlit.
+- Modular pipeline architecture
+- Separation of business logic and UI
+- Reusable scoring engine per questionnaire
+- Config-driven design (thresholds, mappings, labels)
+- Reproducible analytics workflow
+- Exportable reporting system
 
-## Project Structure
+---
 
-```text
-survey-analytics-platform/
-├── app.py
-├── README.md
-├── architecture.md
-├── requirements.txt
-├── pages/
-│   ├── 1_karasek.py
-│   ├── 2_qvt.py
-│   ├── 3_mbi.py
-│   ├── _ui_shared.py
-│   └── _export_utils.py
-└── lib/
-    ├── common/
-    │   ├── __init__.py
-    │   ├── base_questionnaire.py
-    │   ├── common_cleaning.py
-    │   └── file_utils.py
-    ├── data/
-    │   ├── sample_karasek1.csv
-    │   ├── sample_karasek2.csv
-    │   ├── sample_qvt.csv
-    │   └── sample_mbi.csv
-    └── questionnaires/
-        ├── karasek/
-        ├── qvt/
-        └── mbi/
-```
-
-## Directory Roles
-
-### `app.py`
-
-Landing page. It does not compute scores. It acts solely as a navigation hub to the three dashboard modules.
-
-### `pages/`
-
-Contains the Streamlit pages.
-
-Each questionnaire page:
-- handles file uploads;
-- executes the analysis pipeline;
-- applies filters;
-- displays KPIs, charts, and tables;
-- manages Word and ZIP exports.
-
-The two utility files are:
-- `pages/_ui_shared.py`: reusable UI components;
-- `pages/_export_utils.py`: ZIP logic and download buttons.
-
-### `lib/common/`
-
-Contains the shared foundation:
-- file reading;
-- common data cleaning;
-- socio-demographic enrichment;
-- abstract questionnaire interface.
-
-### `lib/questionnaires/`
-
-Each subfolder follows the same structure:
-- `config.py`: constants, thresholds, mappings, labels, colors;
-- `questionnaire.py`: main analysis pipeline;
-- `analytics.py`: aggregated metrics for the dashboard;
-- `visualizations.py`: PNG figure generation;
-- `reporting.py`: Word document generation.
-
-## Technical Pipeline
-
-The main data flow is:
-
-```text
-Raw File
-  -> load_dataframe(...)
-  -> Questionnaire.clean(...)
-  -> Questionnaire.score(...)
-  -> Questionnaire.classify(...)
-  -> Questionnaire.analytics(...)
-  -> Visualizations.generate_all(...)
-  -> Reporting.generate(...)
-```
-
-## Installation
-
-### Prerequisites
-
-- Python 3.11 or newer recommended
-- `pip`
-
-### Setup
+## 🚀 Getting Started
 
 ```bash
 pip install -r requirements.txt
-```
-
-### Run
-
-```bash
 streamlit run app.py
-```
+````
 
-## Key Dependencies
+---
 
-- `streamlit`: web interface
-- `pandas`: data manipulation
-- `numpy`: numerical computing
-- `plotly`: interactive charts
-- `matplotlib` & `seaborn`: static figure exports
-- `python-docx`: Word report generation
+## 📁 Sample Data
 
-## Sample Files
+Example datasets are provided in `lib/data/` to:
 
-Sample datasets are available in [lib/data](lib/data).
+* test the pipeline
+* validate outputs
+* demonstrate expected input format
 
-They are used to:
-- quickly test the application;
-- understand the expected input format;
-- validate visualizations and reports.
+---
 
-## Data Handling
+## 🎯 Objective
 
-The project automatically removes sensitive or irrelevant columns:
-- first name;
-- last name;
-- email;
-- phone number;
-- empty or near-empty columns.
+* Data Science Internship (applied or research-oriented)
+* AIMS Program (Applied Mathematics / Data Science)
 
-It also enriches the data when possible:
-- age brackets;
-- tenure brackets;
-- BMI;
-- derived categories for cross-tabulations.
+---
 
-If a file lacks an `Age` column but contains age brackets, the project estimates the average age and supports age-based filtering from the bracket data.
-
-## Supported Questionnaires
-
-### Karasek
-
-Purpose:
-- measure psychological demand;
-- assess decision latitude;
-- evaluate social support;
-- identify workplace tension zones.
-
-Key Outputs:
-- Karasek quadrants;
-- Job Strain;
-- Iso-Strain;
-- complementary HR metrics.
-
-### QVT (Quality of Life at Work)
-
-Purpose:
-- measure organizational well-being across multiple dimensions.
-
-Key Outputs:
-- global QVT score;
-- distribution per dimension;
-- satisfied / neutral / dissatisfied breakdown.
-
-### MBI (Maslach Burnout Inventory)
-
-Purpose:
-- assess burnout risk.
-
-Key Outputs:
-- emotional exhaustion;
-- cynicism / depersonalization;
-- professional efficacy;
-- composite burnout risk score.
-
-## Reporting & Exports
-
-Each page can generate:
-- a Word report (`.docx`);
-- a ZIP file containing the report and all PNG figures.
-
-Reporting relies on pre-computed aggregated metrics. It does not recalculate business logic from scratch.
-
-## Adding a New Questionnaire
-
-The simplest approach is to copy an existing module's structure.
-
-Steps:
-1. create `lib/questionnaires/your_module/`;
-2. add `config.py`;
-3. add `questionnaire.py`;
-4. add `analytics.py`;
-5. add `visualizations.py` if needed;
-6. add `reporting.py`;
-7. create a corresponding Streamlit page in `pages/`.
-
-The new questionnaire class must inherit from `BaseQuestionnaire`.
-
-## Code Philosophy
-
-The project intentionally separates:
-- business logic;
-- presentation layer;
-- export mechanisms;
-- configuration/constants.
-
-This separation enables:
-- updating thresholds without touching the dashboard;
-- redesigning the UI without breaking calculations;
-- reusing the same metrics for both charts and reports.
-
-## Additional Documentation
-
-The [architecture.md](architecture.md) file provides in-depth details on:
-- project layers;
-- role of key files;
-- complete data lifecycle;
-- questionnaire-specific logic;
-- development conventions.
+📍 Abidjan, Côte d’Ivoire
+🎓 Data Science student @ African School of Economics
