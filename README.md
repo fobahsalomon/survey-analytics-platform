@@ -1,33 +1,46 @@
+
 # SurveyLens
 
-SurveyLens est une application Streamlit d'analyse de questionnaires RH et RPS.
+SurveyLens is a Streamlit application for analyzing HR and psychosocial risk (RPS) questionnaires.
 
-Le projet permet de :
-- charger un fichier CSV ou Excel ;
-- nettoyer les données ;
-- calculer des scores questionnaire par questionnaire ;
-- produire des indicateurs agrégés ;
-- afficher un dashboard interactif ;
-- générer un rapport Word et un export ZIP avec les figures.
+The project allows you to:
+- load a CSV or Excel file;
+- clean the data;
+- calculate questionnaire-specific scores;
+- generate aggregated indicators;
+- display an interactive dashboard;
+- generate a Word report and a ZIP export containing all figures.
 
-Le dépôt contient actuellement 3 modules d'analyse :
-- `Karasek` : stress au travail, Job Strain, Iso-Strain, quadrants ;
-- `QVT` : qualité de vie au travail ;
-- `MBI` : burnout selon le Maslach Burnout Inventory.
+The repository currently includes 3 analysis modules:
+- `Karasek`: workplace stress, Job Strain, Iso-Strain, quadrants;
+- `QVT`: Quality of Life at Work (Qualité de Vie au Travail);
+- `MBI`: burnout assessment using the Maslach Burnout Inventory.
 
-## À quoi sert le projet
+### 🛠 Tech Stack
 
-L'application sert de couche de présentation au-dessus d'un moteur d'analyse.
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-4DABCF?style=flat&logo=numpy&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=flat&logo=plotly&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?style=flat&logo=python&logoColor=white)
+![Seaborn](https://img.shields.io/badge/Seaborn-3776AB?style=flat&logo=python&logoColor=white)
+![python-docx](https://img.shields.io/badge/python--docx-0078D4?style=flat&logo=microsoft-word&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=flat&logo=git&logoColor=white)
 
-Le principe est toujours le même :
-1. l'utilisateur charge un fichier ;
-2. le fichier est converti en `DataFrame` pandas ;
-3. le pipeline du questionnaire nettoie, score et classe les réponses ;
-4. les analytics produisent les KPI et distributions ;
-5. les visualisations et le reporting utilisent ces résultats ;
-6. le dashboard affiche le tout dans Streamlit.
+## Project Purpose
 
-## Structure du projet
+The application serves as a presentation layer on top of a core analysis engine.
+
+The workflow is consistent:
+1. The user uploads a file;
+2. The file is converted into a pandas DataFrame;
+3. The questionnaire pipeline cleans, scores, and classifies responses;
+4. Analytics compute KPIs and distributions;
+5. Visualizations and reporting consume these results;
+6. The dashboard renders everything in Streamlit.
+
+## Project Structure
 
 ```text
 survey-analytics-platform/
@@ -58,52 +71,50 @@ survey-analytics-platform/
         └── mbi/
 ```
 
-## Rôle des dossiers
+## Directory Roles
 
 ### `app.py`
 
-Page d'accueil.
-
-Elle ne calcule pas de scores. Elle sert uniquement de hub de navigation vers les trois dashboards.
+Landing page. It does not compute scores. It acts solely as a navigation hub to the three dashboard modules.
 
 ### `pages/`
 
-Contient les pages Streamlit.
+Contains the Streamlit pages.
 
-Chaque page questionnaire :
-- gère l'upload ;
-- exécute le pipeline ;
-- applique les filtres ;
-- affiche les KPI, graphiques et tableaux ;
-- pilote l'export Word et ZIP.
+Each questionnaire page:
+- handles file uploads;
+- executes the analysis pipeline;
+- applies filters;
+- displays KPIs, charts, and tables;
+- manages Word and ZIP exports.
 
-Les deux fichiers spéciaux sont :
-- `pages/_ui_shared.py` : composants UI réutilisables ;
-- `pages/_export_utils.py` : logique ZIP et boutons de téléchargement.
+The two utility files are:
+- `pages/_ui_shared.py`: reusable UI components;
+- `pages/_export_utils.py`: ZIP logic and download buttons.
 
 ### `lib/common/`
 
-Contient le socle partagé :
-- lecture de fichiers ;
-- nettoyage commun ;
-- enrichissement socio-démographique ;
-- interface abstraite des questionnaires.
+Contains the shared foundation:
+- file reading;
+- common data cleaning;
+- socio-demographic enrichment;
+- abstract questionnaire interface.
 
 ### `lib/questionnaires/`
 
-Chaque sous-dossier suit la même idée :
-- `config.py` : constantes, seuils, mappings, labels, couleurs ;
-- `questionnaire.py` : pipeline principal ;
-- `analytics.py` : calculs agrégés pour le dashboard ;
-- `visualizations.py` : figures PNG ;
-- `reporting.py` : génération du document Word.
+Each subfolder follows the same structure:
+- `config.py`: constants, thresholds, mappings, labels, colors;
+- `questionnaire.py`: main analysis pipeline;
+- `analytics.py`: aggregated metrics for the dashboard;
+- `visualizations.py`: PNG figure generation;
+- `reporting.py`: Word document generation.
 
-## Pipeline technique
+## Technical Pipeline
 
-Le flux principal est :
+The main data flow is:
 
 ```text
-Fichier brut
+Raw File
   -> load_dataframe(...)
   -> Questionnaire.clean(...)
   -> Questionnaire.score(...)
@@ -115,136 +126,136 @@ Fichier brut
 
 ## Installation
 
-### Prérequis
+### Prerequisites
 
-- Python 3.11 ou plus récent recommandé
+- Python 3.11 or newer recommended
 - `pip`
 
-### Installation
+### Setup
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Lancement
+### Run
 
 ```bash
 streamlit run app.py
 ```
 
-## Dépendances importantes
+## Key Dependencies
 
-- `streamlit` : interface web
-- `pandas` : manipulation des données
-- `numpy` : calcul numérique
-- `plotly` : graphiques interactifs
-- `matplotlib` et `seaborn` : figures exportées en PNG
-- `python-docx` : génération des rapports Word
+- `streamlit`: web interface
+- `pandas`: data manipulation
+- `numpy`: numerical computing
+- `plotly`: interactive charts
+- `matplotlib` & `seaborn`: static figure exports
+- `python-docx`: Word report generation
 
-## Fichiers d'exemple
+## Sample Files
 
-Des jeux de données d'exemple sont présents dans [lib/data](/home/fobah-salomon/OneDrive/workspace/GitHub/survey-analytics-platform/lib/data).
+Sample datasets are available in [lib/data](lib/data).
 
-Ils servent à :
-- tester rapidement l'application ;
-- comprendre le format attendu ;
-- valider les visualisations et les rapports.
+They are used to:
+- quickly test the application;
+- understand the expected input format;
+- validate visualizations and reports.
 
-## Gestion des données
+## Data Handling
 
-Le projet supprime automatiquement certaines colonnes sensibles ou inutiles :
-- nom ;
-- prénom ;
-- email ;
-- téléphone ;
-- colonnes vides ou quasi vides.
+The project automatically removes sensitive or irrelevant columns:
+- first name;
+- last name;
+- email;
+- phone number;
+- empty or near-empty columns.
 
-Le projet enrichit aussi les données quand c'est possible :
-- tranche d'âge ;
-- tranche d'ancienneté ;
-- IMC ;
-- catégories dérivées utiles aux tableaux croisés.
+It also enriches the data when possible:
+- age brackets;
+- tenure brackets;
+- BMI;
+- derived categories for cross-tabulations.
 
-Quand un fichier ne contient pas `Age` mais contient une tranche d'âge, le projet sait maintenant estimer l'âge moyen et filtrer sur l'âge à partir de cette tranche.
+If a file lacks an `Age` column but contains age brackets, the project estimates the average age and supports age-based filtering from the bracket data.
 
-## Questionnaires pris en charge
+## Supported Questionnaires
 
 ### Karasek
 
-But :
-- mesurer la demande psychologique ;
-- la latitude décisionnelle ;
-- le soutien social ;
-- les zones de tension au travail.
+Purpose:
+- measure psychological demand;
+- assess decision latitude;
+- evaluate social support;
+- identify workplace tension zones.
 
-Sorties clés :
-- quadrants Karasek ;
-- Job Strain ;
-- Iso-Strain ;
-- scores RH complémentaires.
+Key Outputs:
+- Karasek quadrants;
+- Job Strain;
+- Iso-Strain;
+- complementary HR metrics.
 
-### QVT
+### QVT (Quality of Life at Work)
 
-But :
-- mesurer le bien-être organisationnel sur plusieurs dimensions.
+Purpose:
+- measure organizational well-being across multiple dimensions.
 
-Sorties clés :
-- score global QVT ;
-- distribution par dimension ;
-- répartition satisfaisant / mitigé / insatisfaisant.
+Key Outputs:
+- global QVT score;
+- distribution per dimension;
+- satisfied / neutral / dissatisfied breakdown.
 
-### MBI
+### MBI (Maslach Burnout Inventory)
 
-But :
-- mesurer le risque de burnout.
+Purpose:
+- assess burnout risk.
 
-Sorties clés :
-- épuisement ;
-- cynisme ;
-- efficacité personnelle ;
-- risque de burnout composite.
+Key Outputs:
+- emotional exhaustion;
+- cynicism / depersonalization;
+- professional efficacy;
+- composite burnout risk score.
 
-## Reporting et exports
+## Reporting & Exports
 
-Chaque page peut produire :
-- un rapport Word `.docx` ;
-- un ZIP contenant le rapport et toutes les figures PNG.
+Each page can generate:
+- a Word report (`.docx`);
+- a ZIP file containing the report and all PNG figures.
 
-Le reporting s'appuie sur les métriques agrégées déjà calculées. Il ne recalcule pas la logique métier depuis zéro.
+Reporting relies on pre-computed aggregated metrics. It does not recalculate business logic from scratch.
 
-## Ajouter un nouveau questionnaire
+## Adding a New Questionnaire
 
-La manière la plus simple est de copier la structure d'un module existant.
+The simplest approach is to copy an existing module's structure.
 
-Étapes :
-1. créer `lib/questionnaires/mon_module/` ;
-2. ajouter `config.py` ;
-3. ajouter `questionnaire.py` ;
-4. ajouter `analytics.py` ;
-5. ajouter `visualizations.py` si nécessaire ;
-6. ajouter `reporting.py` ;
-7. créer une page Streamlit dans `pages/`.
+Steps:
+1. create `lib/questionnaires/your_module/`;
+2. add `config.py`;
+3. add `questionnaire.py`;
+4. add `analytics.py`;
+5. add `visualizations.py` if needed;
+6. add `reporting.py`;
+7. create a corresponding Streamlit page in `pages/`.
 
-La classe questionnaire doit hériter de `BaseQuestionnaire`.
+The new questionnaire class must inherit from `BaseQuestionnaire`.
 
-## Philosophie du code
+## Code Philosophy
 
-Le projet sépare volontairement :
-- la logique métier ;
-- la présentation ;
-- l'export ;
-- les constantes.
+The project intentionally separates:
+- business logic;
+- presentation layer;
+- export mechanisms;
+- configuration/constants.
 
-Cette séparation permet :
-- de modifier les seuils sans toucher au dashboard ;
-- de changer l'UI sans casser les calculs ;
-- de réutiliser les mêmes métriques pour les graphiques et les rapports.
+This separation enables:
+- updating thresholds without touching the dashboard;
+- redesigning the UI without breaking calculations;
+- reusing the same metrics for both charts and reports.
 
-## Documentation complémentaire
+## Additional Documentation
 
-Le fichier [architecture.md](/home/fobah-salomon/OneDrive/workspace/GitHub/survey-analytics-platform/architecture.md) décrit en détail :
-- les couches du projet ;
-- le rôle de chaque fichier important ;
-- le cycle de vie complet d'une donnée ;
-- la logique de chaque questionnaire ;
-- les conventions de développement.
+The [architecture.md](architecture.md) file provides in-depth details on:
+- project layers;
+- role of key files;
+- complete data lifecycle;
+- questionnaire-specific logic;
+- development conventions.
