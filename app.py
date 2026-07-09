@@ -21,6 +21,13 @@ st.markdown("""
 *, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; color: #0F2340; }
 
+/* Cette page est volontairement claire en permanence : on force le header
+   natif Streamlit (qui suit sinon son propre thème clair/sombre) à rester
+   clair lui aussi, pour éviter un bandeau sombre illisible au-dessus d'un
+   contenu clair. */
+[data-testid="stHeader"] { background: #F0F7FF !important; box-shadow: none !important; }
+[data-testid="stHeader"] svg { fill: #4E6A88 !important; }
+
 .stApp {
     background-color: #F0F7FF;
     background-image:
