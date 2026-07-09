@@ -125,5 +125,5 @@ def render_zip_button(
         data=zip_bytes,
         file_name=filename,
         mime="application/zip",
-        use_container_width=True,
+        width="stretch",
     )

@@ -27,12 +27,12 @@ if str(ROOT) not in sys.path:
 from lib.questionnaires.mbi import MBIQuestionnaire, MBIReporting, MBIVisualizations
 from lib.questionnaires.mbi.config import DIMENSIONS, THRESHOLDS, MBI_COLORS, BURNOUT_RISK_LEVELS
 from lib.common.file_utils import load_dataframe
-from pages._export_utils import render_zip_button, build_zip
 from pages._ui_shared import (
     inject_css, inject_animation_js,
     section_title, svg_icon, html_kpi, html_gauge_raw, html_prog,
     html_zone, html_ls_n, make_barplot, make_stacked, make_radar,
     _plotly_base, fig_to_png, render_sidebar, render_export_button,
+    render_export_header, render_export_downloads,
     _norm,
 )
 
@@ -68,7 +68,7 @@ with _col_top:
         unsafe_allow_html=True,
     )
 with _col_back:
-    if st.button("← Accueil", key="back_home_mbi", use_container_width=True):
+    if st.button("← Accueil", key="back_home_mbi", width="stretch"):
         st.switch_page("app.py")
 
 # ─── UPLOAD ──────────────────────────────────────────────────────────────────
@@ -97,8 +97,8 @@ else:
 
 if st.session_state.get("_mbi_is_demo"):
     st.info(
-        f"Mode demo active: le fichier d'exemple `{st.session_state['_mbi_name']}` a ete charge automatiquement. "
-        "Importez votre propre fichier pour remplacer ces donnees."
+        f"Mode démo actif : le fichier d'exemple `{st.session_state['_mbi_name']}` a été chargé automatiquement. "
+        "Importez votre propre fichier pour remplacer ces données."
     )
 
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
@@ -118,16 +118,15 @@ df = render_sidebar(df_scored, prefix="mbi")
 
 with st.sidebar:
     n_f = len(df)
-    st.markdown(f"""<div style="text-align:center;padding:0.7rem;background:#FEF3C7;border-radius:10px;margin-top:0.8rem;">
-    <span style="font-size:0.7rem;color:#92400E;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Effectif filtré</span><br>
+    st.markdown(f"""<div style="text-align:center;padding:0.7rem;background:rgba(249,115,22,0.10);
+    border:1px solid rgba(249,115,22,0.2);border-radius:10px;margin-top:0.8rem;">
+    <span style="font-size:0.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Effectif filtré</span><br>
     <span style="font-size:1.6rem;font-weight:800;color:#F97316;">{n_f}</span>
     </div>""", unsafe_allow_html=True)
 
-    # Export
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown('<span style="font-size:0.7rem;font-weight:700;color:#6B88A8;text-transform:uppercase;letter-spacing:0.08em;">Export</span>', unsafe_allow_html=True)
-    company_mbi = st.text_input("Nom organisation", value="Mon Organisation", key="mbi_company")
-    if st.button("Générer rapport + visuels", key="mbi_gen_report", use_container_width=True):
+    company_mbi = render_export_header(prefix="mbi")
+
+    if st.button("Générer rapport + visuels", key="mbi_gen_report", width="stretch"):
         with st.spinner("Génération des visualisations…"):
             try:
                 viz_mbi = MBIVisualizations(company=company_mbi)
@@ -154,16 +153,11 @@ with st.sidebar:
                 st.error(f"python-docx manquant : {e}")
             except Exception as e:
                 st.error(f"Erreur rapport : {e}")
-    if "_mbi_report" in st.session_state:
-        render_export_button(st.session_state["_mbi_report"], "rapport_mbi.docx")
-    if "_mbi_report" in st.session_state or st.session_state.get("_mbi_figures"):
-        st.markdown("<br>", unsafe_allow_html=True)
-        render_zip_button(
-            docx_bytes=st.session_state.get("_mbi_report"),
-            figures=st.session_state.get("_mbi_figures", {}),
-            prefix="mbi", company=company_mbi,
-            label="📦 Télécharger tout (ZIP)",
-        )
+
+    render_export_downloads(
+        report_key="_mbi_report", figures_key="_mbi_figures",
+        docx_filename="rapport_mbi.docx", zip_prefix="mbi", company=company_mbi,
+    )
 
 if len(df) == 0:
     st.warning("Aucun répondant ne correspond aux filtres sélectionnés.")
@@ -298,7 +292,7 @@ with tab_dims:
         yaxis_title="Pourcentage (%)",
         legend_title_text="Niveau",
     )
-    st.plotly_chart(fig_mbi, use_container_width=True, key="mbi_bar_dims")
+    st.plotly_chart(fig_mbi, width="stretch", key="mbi_bar_dims")
 
     # Tableau
     section_title("Tableau de synthèse")
@@ -315,10 +309,10 @@ with tab_dims:
         })
     df_tbl = pd.DataFrame(rows_tbl)
     styled = df_tbl.style \
-        .applymap(lambda v: "color:#22C55E;font-weight:700" if v >= 60 else "", subset=["% Bas"]) \
-        .applymap(lambda v: "color:#EF4444;font-weight:700" if v > 30 else "", subset=["% Élevé"]) \
+        .map(lambda v: "color:#22C55E;font-weight:700" if v >= 60 else "", subset=["% Bas"]) \
+        .map(lambda v: "color:#EF4444;font-weight:700" if v > 30 else "", subset=["% Élevé"]) \
         .format({"Score moyen": "{:.2f}", "% Bas": "{:.1f}%", "% Modéré": "{:.1f}%", "% Élevé": "{:.1f}%"})
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.dataframe(styled, width="stretch", hide_index=True)
 
     # Avertissement si burnout élevé
     if burnout_risk:
@@ -378,14 +372,14 @@ with tab_cross:
             if cross_col and cross_col in df.columns:
                 fig_cr = make_stacked(df, real_col, cross_col)
                 if fig_cr:
-                    st.plotly_chart(fig_cr, use_container_width=True, key="mbi_cr_stacked")
+                    st.plotly_chart(fig_cr, width="stretch", key="mbi_cr_stacked")
                     tmp = df[[real_col, cross_col]].dropna()
                     if not tmp.empty:
                         pct_tbl = pd.crosstab(tmp[real_col].astype(str), tmp[cross_col].astype(str), normalize="index").mul(100).round(1)
-                        st.dataframe(pct_tbl.style.format("{:.1f}%"), use_container_width=True)
+                        st.dataframe(pct_tbl.style.format("{:.1f}%"), width="stretch")
                 else:
                     st.info("Données insuffisantes.")
             else:
                 fig_bar = make_barplot(df, real_col)
                 if fig_bar:
-                    st.plotly_chart(fig_bar, use_container_width=True, key="mbi_cr_bar")
+                    st.plotly_chart(fig_bar, width="stretch", key="mbi_cr_bar")

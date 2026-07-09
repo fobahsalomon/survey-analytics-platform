@@ -140,13 +140,13 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 # Les trois boutons redirigent vers les pages Streamlit spécialisées.
 col1, col2, col3 = st.columns(3)
 with col1:
-    if st.button("Ouvrir Karasek DCS →", key="nav_karasek", use_container_width=True):
+    if st.button("Ouvrir Karasek DCS →", key="nav_karasek", width="stretch"):
         st.switch_page("pages/1_karasek.py")
 with col2:
-    if st.button("Ouvrir QVT →", key="nav_qvt", use_container_width=True):
+    if st.button("Ouvrir QVT →", key="nav_qvt", width="stretch"):
         st.switch_page("pages/2_qvt.py")
 with col3:
-    if st.button("Ouvrir MBI Burnout →", key="nav_mbi", use_container_width=True):
+    if st.button("Ouvrir MBI Burnout →", key="nav_mbi", width="stretch"):
         st.switch_page("pages/3_mbi.py")
 
 st.markdown("""

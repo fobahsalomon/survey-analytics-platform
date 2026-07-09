@@ -2,6 +2,7 @@
 lib/common/file_utils.py
 Utilitaires de chargement de fichiers.
 """
+from __future__ import annotations
 
 import csv
 import io
@@ -83,7 +84,7 @@ def load_dataframe(source, file_name: str | None = None, encoding_fallback: str 
     else:
         # file-like (Streamlit UploadedFile, BytesIO...)
         raw = source.read() if hasattr(source, "read") else bytes(source)
-        name = file_name or getattr(source, "name", "data")
+        name = file_name or str(getattr(source, "name", "data"))
 
     buf = io.BytesIO(raw)
 

@@ -28,12 +28,12 @@ if str(ROOT) not in sys.path:
 from lib.questionnaires.qvt import QVTQuestionnaire, QVTReporting, QVTVisualizations
 from lib.questionnaires.qvt.config import DIMENSIONS, THRESHOLDS, QVT_COLORS
 from lib.common.file_utils import load_dataframe
-from pages._export_utils import render_zip_button, build_zip
 from pages._ui_shared import (
     inject_css, inject_animation_js,
     section_title, svg_icon, html_kpi, html_gauge_raw, html_prog,
     html_zone, html_ls_n, make_barplot, make_stacked, make_radar,
     _plotly_base, fig_to_png, render_sidebar, render_export_button,
+    render_export_header, render_export_downloads,
     _norm,
 )
 
@@ -69,7 +69,7 @@ with _col_top:
         unsafe_allow_html=True,
     )
 with _col_back:
-    if st.button("← Accueil", key="back_home_qvt", use_container_width=True):
+    if st.button("← Accueil", key="back_home_qvt", width="stretch"):
         st.switch_page("app.py")
 
 # ─── UPLOAD ──────────────────────────────────────────────────────────────────
@@ -98,8 +98,8 @@ else:
 
 if st.session_state.get("_qvt_is_demo"):
     st.info(
-        f"Mode demo active: le fichier d'exemple `{st.session_state['_qvt_name']}` a ete charge automatiquement. "
-        "Importez votre propre fichier pour remplacer ces donnees."
+        f"Mode démo actif : le fichier d'exemple `{st.session_state['_qvt_name']}` a été chargé automatiquement. "
+        "Importez votre propre fichier pour remplacer ces données."
     )
 
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
@@ -120,33 +120,29 @@ df = render_sidebar(df_scored, prefix="qvt")
 
 with st.sidebar:
     n_f = len(df)
-    st.markdown(f"""<div style="text-align:center;padding:0.7rem;background:#DCFCE7;border-radius:10px;margin-top:0.8rem;">
-    <span style="font-size:0.7rem;color:#15803D;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Effectif filtré</span><br>
+    st.markdown(f"""<div style="text-align:center;padding:0.7rem;background:rgba(34,197,94,0.10);
+    border:1px solid rgba(34,197,94,0.2);border-radius:10px;margin-top:0.8rem;">
+    <span style="font-size:0.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Effectif filtré</span><br>
     <span style="font-size:1.6rem;font-weight:800;color:#22C55E;">{n_f}</span>
     </div>""", unsafe_allow_html=True)
 
-    # Export
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown('<span style="font-size:0.7rem;font-weight:700;color:#6B88A8;text-transform:uppercase;letter-spacing:0.08em;">Export</span>', unsafe_allow_html=True)
-    company_qvt = st.text_input("Nom organisation", value="Mon Organisation", key="qvt_company")
-    if st.button("Générer rapport + visuels", key="qvt_gen_report", use_container_width=True):
+    company_qvt = render_export_header(prefix="qvt")
+
+    if st.button("Générer rapport + visuels", key="qvt_gen_report", width="stretch"):
+        metrics_export = QVTQuestionnaire().analytics(df)
         with st.spinner("Génération des visualisations…"):
             try:
-                viz_qvt = QVTVisualizations(company=company_qvt)
-                q_engine_tmp = QVTQuestionnaire()
-                metrics_tmp  = q_engine_tmp.analytics(df)
-                figs_qvt = viz_qvt.generate_all(df, metrics_tmp)
+                viz_qvt  = QVTVisualizations(company=company_qvt)
+                figs_qvt = viz_qvt.generate_all(df, metrics_export)
                 st.session_state["_qvt_figures"] = figs_qvt
             except Exception as e:
                 st.warning(f"Visualisations partielles : {e}")
                 st.session_state["_qvt_figures"] = {}
         with st.spinner("Génération du rapport Word…"):
             try:
-                q_engine = QVTQuestionnaire()
-                metrics  = q_engine.analytics(df)
-                reporter = QVTReporting(company_name=company_qvt)
+                reporter   = QVTReporting(company_name=company_qvt)
                 docx_bytes = reporter.generate(
-                    metrics,
+                    metrics_export,
                     figures=st.session_state.get("_qvt_figures", {}),
                 )
                 st.session_state["_qvt_report"] = docx_bytes
@@ -156,23 +152,16 @@ with st.sidebar:
                 st.error(f"python-docx manquant : {e}")
             except Exception as e:
                 st.error(f"Erreur rapport : {e}")
-    if "_qvt_report" in st.session_state:
-        render_export_button(st.session_state["_qvt_report"], "rapport_qvt.docx")
-    if "_qvt_report" in st.session_state or st.session_state.get("_qvt_figures"):
-        st.markdown("<br>", unsafe_allow_html=True)
-        render_zip_button(
-            docx_bytes=st.session_state.get("_qvt_report"),
-            figures=st.session_state.get("_qvt_figures", {}),
-            prefix="qvt", company=company_qvt,
-            label="📦 Télécharger tout (ZIP)",
-        )
+
+    render_export_downloads(
+        report_key="_qvt_report", figures_key="_qvt_figures",
+        docx_filename="rapport_qvt.docx", zip_prefix="qvt", company=company_qvt,
+    )
 
 if len(df) == 0:
     st.warning("Aucun répondant ne correspond aux filtres sélectionnés.")
     st.stop()
 
-# `metrics` contient toute la matière première du dashboard.
-# Les onglets suivants se contentent de présenter ces résultats.
 # ─── ANALYTICS ───────────────────────────────────────────────────────────────
 q_engine = QVTQuestionnaire()
 metrics  = q_engine.analytics(df)
@@ -235,7 +224,7 @@ with tab_overview:
         rc1, rc2 = st.columns([6, 4])
         with rc1:
             fig_radar = make_radar(dim_scores, list(dim_scores.keys()))
-            st.plotly_chart(fig_radar, use_container_width=True, key="qvt_radar")
+            st.plotly_chart(fig_radar, width="stretch", key="qvt_radar")
         with rc2:
             st.markdown("<br>", unsafe_allow_html=True)
             for dim_key, data in dims.items():
@@ -259,13 +248,9 @@ with tab_dims:
         cols = st.columns(len(row))
         for col, (dim_key, data) in zip(cols, row):
             mean_val = data.get("mean", 0)
-            # QVT échelle 1-5 : max par item = 5
-            # max_score dépend du nombre d'items de la dimension
-            n_items = len([k for k in ["Q1", "Q2", "Q3", "Q4"] if f"{k}_{dim_key}" in df.columns]) or 3
-            max_score = 5 * n_items
-            cats = data.get("categories", {})
-            pct_sat = cats.get("Satisfaisant", {}).get("pct", 0)
-            color = "#22C55E" if pct_sat >= 60 else "#EF4444" if pct_sat < 40 else "#F97316"
+            cats     = data.get("categories", {})
+            pct_sat  = cats.get("Satisfaisant", {}).get("pct", 0)
+            color    = "#22C55E" if pct_sat >= 60 else "#EF4444" if pct_sat < 40 else "#F97316"
             with col:
                 st.markdown(html_gauge_raw(mean_val, 5, data["label"], f"n = {data.get('n', 0)}", color=color), unsafe_allow_html=True)
 
@@ -297,7 +282,7 @@ with tab_dims:
         yaxis=dict(title_text="Pourcentage (%)"),
         legend=dict(title_text="Catégorie"),
     )
-    st.plotly_chart(fig_dims, use_container_width=True, key="qvt_bar_dims")
+    st.plotly_chart(fig_dims, width="stretch", key="qvt_bar_dims")
 
     # Tableau de synthèse
     section_title("Tableau de synthèse")
@@ -318,10 +303,10 @@ with tab_dims:
         color = "#22C55E" if val >= 60 else "#EF4444" if val < 40 else "#F97316"
         return f"color: {color}; font-weight: 700"
 
-    styled = df_tbl.style.applymap(_color_pct, subset=["% Satisfaisant"]) \
-                        .applymap(lambda v: "color:#EF4444;font-weight:700" if v > 30 else "", subset=["% Insatisfaisant"]) \
+    styled = df_tbl.style.map(_color_pct, subset=["% Satisfaisant"]) \
+                        .map(lambda v: "color:#EF4444;font-weight:700" if v > 30 else "", subset=["% Insatisfaisant"]) \
                         .format({"Score moyen": "{:.2f}", "% Satisfaisant": "{:.1f}%", "% Mitigé": "{:.1f}%", "% Insatisfaisant": "{:.1f}%"})
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.dataframe(styled, width="stretch", hide_index=True)
 
 
 # =============================================================================
@@ -366,14 +351,14 @@ with tab_cross:
             if cross_col and cross_col in df.columns:
                 fig_cr = make_stacked(df, real_col, cross_col)
                 if fig_cr:
-                    st.plotly_chart(fig_cr, use_container_width=True, key="qvt_cr_stacked")
+                    st.plotly_chart(fig_cr, width="stretch", key="qvt_cr_stacked")
                     tmp = df[[real_col, cross_col]].dropna()
                     if not tmp.empty:
                         pct_tbl = pd.crosstab(tmp[real_col].astype(str), tmp[cross_col].astype(str), normalize="index").mul(100).round(1)
-                        st.dataframe(pct_tbl.style.format("{:.1f}%"), use_container_width=True)
+                        st.dataframe(pct_tbl.style.format("{:.1f}%"), width="stretch")
                 else:
                     st.info("Données insuffisantes.")
             else:
                 fig_bar = make_barplot(df, real_col)
                 if fig_bar:
-                    st.plotly_chart(fig_bar, use_container_width=True, key="qvt_cr_bar")
+                    st.plotly_chart(fig_bar, width="stretch", key="qvt_cr_bar")

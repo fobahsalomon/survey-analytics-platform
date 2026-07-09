@@ -2,6 +2,7 @@
 lib/common/common_cleaning.py
 Utilitaires partagés de nettoyage de données.
 """
+from __future__ import annotations
 
 import re
 import unicodedata

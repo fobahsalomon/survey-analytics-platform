@@ -2,6 +2,7 @@
 pages/_ui_shared.py
 Composants UI Streamlit partagés entre toutes les pages du dashboard.
 """
+from __future__ import annotations
 
 import io
 import re
@@ -10,7 +11,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 
 from lib.common import get_age_series
 
@@ -24,129 +24,211 @@ def inject_css():
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,400;1,9..144,600&display=swap');
 
+/* ── Palette — Mode clair ─────────────────────────────────────────── */
+:root {
+    --bg:         #F0F7FF;
+    --card:       #FFFFFF;
+    --sidebar:    #FFFFFF;
+    --t1:         #0F2340;
+    --t2:         #4E6A88;
+    --t3:         #6B88A8;
+    --t4:         #94A3B8;
+    --bd:         #D6E8F7;
+    --bd2:        #AAD5F5;
+    --bd3:        #C8DFF2;
+    --sh:         rgba(56,163,232,0.06);
+    --sh-h:       rgba(56,163,232,0.15);
+    --prog:       #EDF5FD;
+    --hr:         #E4F0FB;
+    --input-bg:   #FFFFFF;
+    --tab-bg:     #FFFFFF;
+    --scroll-t:   #EDF5FD;
+    --scroll-th:  #AAD5F5;
+}
+
+/* ── Mode sombre — préférence système ───────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg:        #0F172A;
+        --card:      #1E293B;
+        --sidebar:   #1A2744;
+        --t1:        #E2E8F0;
+        --t2:        #94A3B8;
+        --t3:        #64748B;
+        --t4:        #475569;
+        --bd:        #334155;
+        --bd2:       #475569;
+        --bd3:       #334155;
+        --sh:        rgba(0,0,0,0.35);
+        --sh-h:      rgba(56,163,232,0.22);
+        --prog:      #1E293B;
+        --hr:        #334155;
+        --input-bg:  #1E293B;
+        --tab-bg:    #1E293B;
+        --scroll-t:  #1E293B;
+        --scroll-th: #334155;
+    }
+}
+
+/* ── Mode sombre — toggle Streamlit (défini par le JS ci-dessous) ───── */
+html[data-theme="dark"] {
+    --bg:        #0F172A;
+    --card:      #1E293B;
+    --sidebar:   #1A2744;
+    --t1:        #E2E8F0;
+    --t2:        #94A3B8;
+    --t3:        #64748B;
+    --t4:        #475569;
+    --bd:        #334155;
+    --bd2:       #475569;
+    --bd3:       #334155;
+    --sh:        rgba(0,0,0,0.35);
+    --sh-h:      rgba(56,163,232,0.22);
+    --prog:      #1E293B;
+    --hr:        #334155;
+    --input-bg:  #1E293B;
+    --tab-bg:    #1E293B;
+    --scroll-t:  #1E293B;
+    --scroll-th: #334155;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
-html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; color: #0F2340; }
+html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--t1); }
 
 .stApp {
-    background-color: #F0F7FF;
+    background-color: var(--bg);
     background-image:
-        radial-gradient(ellipse 1000px 500px at 10% -5%, rgba(56,163,232,0.12) 0%, transparent 55%),
-        radial-gradient(ellipse 600px 400px at 90% 105%, rgba(249,115,22,0.08) 0%, transparent 50%);
+        radial-gradient(ellipse 1000px 500px at 10% -5%, rgba(56,163,232,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse 600px 400px at 90% 105%, rgba(249,115,22,0.07) 0%, transparent 50%);
 }
 .main .block-container { padding-top: 0.75rem; padding-left: 2rem; padding-right: 2rem; max-width: 1500px; }
 
-[data-testid="stSidebar"] { background: #FFFFFF !important; border-right: 1px solid #D0E8F8 !important; }
+[data-testid="stSidebar"] { background: var(--sidebar) !important; border-right: 1px solid var(--bd) !important; }
 
-.hero-band {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F5F9FF 100%);
-    border: 1px solid #D0E8F8; border-radius: 20px; padding: 1.4rem 2rem 1.3rem;
-    margin-bottom: 0.9rem; position: relative; overflow: hidden;
-    box-shadow: 0 4px 24px rgba(56,163,232,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
-}
-.hero-band::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #38A3E8, #F97316, #38A3E8);
-    background-size: 200% 100%; animation: shimmer 4s linear infinite;
-}
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
+/* ── Titres de section ───────────────────────────────────────────────── */
 .section-title {
     display: flex; align-items: center; gap: 0.7rem; font-family: 'Fraunces', serif;
-    font-size: 1.2rem; font-style: italic; font-weight: 400; color: #0F2340;
-    margin: 1.8rem 0 1rem; padding-bottom: 0.65rem; border-bottom: 2px solid #E4F0FB;
+    font-size: 1.2rem; font-style: italic; font-weight: 400; color: var(--t1);
+    margin: 1.8rem 0 1rem; padding-bottom: 0.65rem; border-bottom: 2px solid var(--bd);
 }
 .section-title::before {
     content: ''; display: inline-block; width: 4px; height: 20px;
     background: linear-gradient(180deg, #38A3E8 0%, #F97316 100%); border-radius: 2px; flex-shrink: 0;
 }
 
+/* ── KPI cards ───────────────────────────────────────────────────────── */
 .kpi-card {
-    background: #FFFFFF; border: 1px solid #D6E8F7; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--bd); border-radius: 16px;
     padding: 1.3rem 1.2rem 1.1rem; text-align: center;
     transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
     animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-    box-shadow: 0 2px 8px rgba(56,163,232,0.06); position: relative; overflow: hidden;
+    box-shadow: 0 2px 8px var(--sh); position: relative; overflow: hidden;
 }
 .kpi-card::after {
     content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg, #38A3E8, #F97316); opacity: 0; transition: opacity 0.22s;
 }
-.kpi-card:hover { transform: translateY(-4px); border-color: #AAD5F5; box-shadow: 0 10px 32px rgba(56,163,232,0.15); }
+.kpi-card:hover { transform: translateY(-4px); border-color: var(--bd2); box-shadow: 0 10px 32px var(--sh-h); }
 .kpi-card:hover::after { opacity: 1; }
-.kpi-label { font-size: 0.8rem; color: #4E6A88 !important; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700; margin-bottom: 0.55rem; display: block; }
-.kpi-icon { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.55rem; }
-.kpi-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.35rem; font-weight: 800; color: #0F2340 !important; line-height: 1; letter-spacing: -0.04em; }
+.kpi-label { font-size: 0.8rem; color: var(--t2) !important; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700; margin-bottom: 0.55rem; display: block; }
+.kpi-icon  { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.55rem; }
+.kpi-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.35rem; font-weight: 800; color: var(--t1) !important; line-height: 1; letter-spacing: -0.04em; }
 @keyframes slideUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
 
+/* ── Jauges ──────────────────────────────────────────────────────────── */
 .gauge-card {
-    background: #FFFFFF; border: 1px solid #D6E8F7; border-radius: 18px;
+    background: var(--card); border: 1px solid var(--bd); border-radius: 18px;
     padding: 1.6rem 1.2rem 1.3rem; text-align: center;
     transition: transform 0.22s ease, box-shadow 0.22s ease;
     animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-    box-shadow: 0 2px 8px rgba(56,163,232,0.06); height: 100%; position: relative; overflow: hidden;
+    box-shadow: 0 2px 8px var(--sh); height: 100%; position: relative; overflow: hidden;
 }
-.gauge-card:hover { transform: translateY(-4px); border-color: #AAD5F5; box-shadow: 0 12px 36px rgba(56,163,232,0.15); }
-.gauge-semi-wrap { position: relative; width: 180px; height: 90px; margin: 0 auto 0.7rem; overflow: hidden; }
-.gauge-semi-bg   { position: absolute; width: 180px; height: 180px; border-radius: 50%; background: #EDF5FD; top: 0; left: 0; }
-.gauge-semi-fill {
+.gauge-card:hover { transform: translateY(-4px); border-color: var(--bd2); box-shadow: 0 12px 36px var(--sh-h); }
+.gauge-semi-wrap  { position: relative; width: 180px; height: 90px; margin: 0 auto 0.7rem; overflow: hidden; }
+.gauge-semi-bg    { position: absolute; width: 180px; height: 180px; border-radius: 50%; background: var(--prog); top: 0; left: 0; }
+.gauge-semi-fill  {
     position: absolute; width: 180px; height: 180px; border-radius: 50%; top: 0; left: 0;
     background: conic-gradient(from 270deg, var(--gauge-color,#38A3E8) 0deg, var(--gauge-color,#38A3E8) calc(var(--g,0deg)), transparent calc(var(--g,0deg)));
 }
-.gauge-semi-inner { position: absolute; width: 112px; height: 112px; background: #FFFFFF; border-radius: 50%; top: 34px; left: 34px; box-shadow: inset 0 2px 8px rgba(56,163,232,0.06); }
-.gauge-value    { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.9rem; font-weight: 800; color: #0F2340; line-height: 1; letter-spacing: -0.04em; }
-.gauge-pct      { font-size: 1rem; font-weight: 500; color: #6B88A8; }
-.gauge-label    { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.96rem; font-weight: 700; color: #0F2340; margin-top: 0.55rem; }
-.gauge-sublabel { font-size: 0.84rem; color: #4E6A88; margin-top: 0.25rem; line-height: 1.5; }
+.gauge-semi-inner { position: absolute; width: 112px; height: 112px; background: var(--card); border-radius: 50%; top: 34px; left: 34px; box-shadow: inset 0 2px 8px var(--sh); }
+.gauge-value    { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.9rem; font-weight: 800; color: var(--t1); line-height: 1; letter-spacing: -0.04em; }
+.gauge-pct      { font-size: 1rem; font-weight: 500; color: var(--t3); }
+.gauge-label    { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.96rem; font-weight: 700; color: var(--t1); margin-top: 0.55rem; }
+.gauge-sublabel { font-size: 0.84rem; color: var(--t2); margin-top: 0.25rem; line-height: 1.5; }
 .gauge-badge    { display: inline-block; margin-top: 0.7rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.22rem 0.85rem; border-radius: 999px; }
-.gauge-badge.good  { background: #DCFCE7; color: #15803D; }
-.gauge-badge.alert { background: #FEE2E2; color: #B91C1C; }
-.gauge-badge.warn  { background: #FEF3C7; color: #92400E; }
+.gauge-badge.good  { background: rgba(34,197,94,0.15);  color: #22C55E; }
+.gauge-badge.alert { background: rgba(239,68,68,0.15);  color: #EF4444; }
+.gauge-badge.warn  { background: rgba(249,115,22,0.15); color: #F97316; }
 
-.prog-track { background: #EDF5FD; border-radius: 999px; height: 7px; overflow: hidden; margin-top: 5px; }
+/* ── Barres de progression ───────────────────────────────────────────── */
+.prog-track { background: var(--prog); border-radius: 999px; height: 7px; overflow: hidden; margin-top: 5px; }
 .prog-fill  { height: 7px; border-radius: 999px; width: 0%; transition: width 1.1s cubic-bezier(0.4,0,0.2,1); }
-.panel-relief { background: #FFFFFF; border: 1px solid #D6E8F7; border-radius: 16px; padding: 0.9rem 1rem 0.6rem; box-shadow: 0 3px 14px rgba(56,163,232,0.08); }
+.panel-relief { background: var(--card); border: 1px solid var(--bd); border-radius: 16px; padding: 0.9rem 1rem 0.6rem; box-shadow: 0 3px 14px var(--sh); }
 
+/* ── Cards de zone / lifestyle ───────────────────────────────────────── */
 .workzone-card, .ls-card {
-    background: #FFFFFF; border: 1px solid #D6E8F7; border-radius: 14px;
+    background: var(--card); border: 1px solid var(--bd); border-radius: 14px;
     padding: 1.1rem 1rem; text-align: center; transition: transform 0.2s, box-shadow 0.2s;
     animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-    box-shadow: 0 2px 6px rgba(56,163,232,0.05);
+    box-shadow: 0 2px 6px var(--sh);
 }
-.workzone-card:hover, .ls-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(56,163,232,0.12); }
+.workzone-card:hover, .ls-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px var(--sh-h); }
 
-[data-baseweb="tab-list"] { background: #FFFFFF !important; border-radius: 12px; padding: 4px; gap: 3px; border: 1px solid #D0E8F8; box-shadow: 0 2px 8px rgba(56,163,232,0.07); }
-[data-baseweb="tab"] { font-family: 'Plus Jakarta Sans', sans-serif !important; font-weight: 600 !important; font-size: 0.88rem !important; color: #6B88A8 !important; border-radius: 9px !important; padding: 0.5rem 1.4rem !important; transition: all 0.2s !important; }
+/* ── Onglets ─────────────────────────────────────────────────────────── */
+[data-baseweb="tab-list"] { background: var(--tab-bg) !important; border-radius: 12px; padding: 4px; gap: 3px; border: 1px solid var(--bd); box-shadow: 0 2px 8px var(--sh); }
+[data-baseweb="tab"] { font-family: 'Plus Jakarta Sans', sans-serif !important; font-weight: 600 !important; font-size: 0.88rem !important; color: var(--t3) !important; border-radius: 9px !important; padding: 0.5rem 1.4rem !important; transition: all 0.2s !important; }
 [aria-selected="true"][data-baseweb="tab"] { background: linear-gradient(135deg, #38A3E8, #2B8FD0) !important; color: #FFFFFF !important; font-weight: 700 !important; box-shadow: 0 3px 12px rgba(56,163,232,0.3) !important; }
 [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-[data-baseweb="select"] > div { background-color: #FFFFFF !important; border-color: #C8DFF2 !important; border-radius: 10px !important; color: #0F2340 !important; }
+/* ── Inputs / Selects ────────────────────────────────────────────────── */
+[data-baseweb="select"] > div { background-color: var(--input-bg) !important; border-color: var(--bd3) !important; border-radius: 10px !important; color: var(--t1) !important; }
+[data-testid="stTextInput"] input { background: var(--input-bg) !important; color: var(--t1) !important; border-color: var(--bd3) !important; }
+
+/* ── Boutons ─────────────────────────────────────────────────────────── */
 .stButton > button { background: linear-gradient(135deg, #38A3E8, #2B8FD0) !important; border: none !important; color: #FFFFFF !important; border-radius: 10px !important; font-family: 'Plus Jakarta Sans', sans-serif !important; font-weight: 700 !important; font-size: 0.8rem !important; letter-spacing: 0.02em !important; box-shadow: 0 3px 10px rgba(56,163,232,0.25) !important; transition: all 0.18s !important; }
 .stButton > button:hover { background: linear-gradient(135deg, #F97316, #EA6A0A) !important; box-shadow: 0 4px 16px rgba(249,115,22,0.3) !important; transform: translateY(-1px) !important; }
 
-div[data-testid="stPlotlyChart"] { border: 1px solid #D6E8F7; border-radius: 12px; background: #FFFFFF; box-shadow: 0 4px 16px rgba(56,163,232,0.06); padding: 4px; }
+/* ── Graphiques Plotly ───────────────────────────────────────────────── */
+div[data-testid="stPlotlyChart"] { border: 1px solid var(--bd); border-radius: 12px; background: var(--card); box-shadow: 0 4px 16px var(--sh); padding: 4px; }
 
+/* ── Scrollbars ──────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #EDF5FD; }
-::-webkit-scrollbar-thumb { background: #AAD5F5; border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--scroll-t); }
+::-webkit-scrollbar-thumb { background: var(--scroll-th); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #38A3E8; }
 
-hr { border: none; border-top: 1px solid #E4F0FB; margin: 1rem 0; }
+hr { border: none; border-top: 1px solid var(--hr); margin: 1rem 0; }
 @property --g { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-
-/* Export button special style */
-.export-btn { margin-top: 0.5rem; }
 </style>
 """, unsafe_allow_html=True)
 
 
 def inject_animation_js():
-    """Injecte le JavaScript qui anime les KPI, jauges et barres de progression."""
-    components.html("""
+    """Injecte le JavaScript qui anime les KPI, jauges et barres de progression, et détecte le thème Streamlit."""
+    st.html("""
 <script>
-const rootDoc = window.parent && window.parent.document ? window.parent.document : document;
+/* ── Détection du thème Streamlit ─────────────────────────────────── */
+function syncTheme() {
+    try {
+        const app = document.querySelector('[data-testid="stAppViewContainer"]') || document.body;
+        const bg  = window.getComputedStyle(app).backgroundColor;
+        const m   = bg.match(/([0-9]+),[ ]*([0-9]+),[ ]*([0-9]+)/);
+        if (m) {
+            const lum = 0.299*+m[1] + 0.587*+m[2] + 0.114*+m[3];
+            if (lum < 100) document.documentElement.setAttribute('data-theme', 'dark');
+            else           document.documentElement.removeAttribute('data-theme');
+        }
+    } catch(e) {}
+}
+syncTheme();
+new MutationObserver(syncTheme).observe(document.body, {
+    childList: true, subtree: true, attributes: true, attributeFilter: ['class','style']
+});
+
+/* ── Animations KPI / jauges / barres ────────────────────────────── */
 function easeOut(t) { return 1 - Math.pow(1-t,3); }
 function cleanNum(v,min,max){var n=parseFloat(v);if(!isFinite(n))n=0;if(typeof min==='number')n=Math.max(min,n);if(typeof max==='number')n=Math.min(max,n);return n;}
-function isVisible(el){if(!el||!el.isConnected)return false;const s=rootDoc.defaultView.getComputedStyle(el);if(s.display==='none'||s.visibility==='hidden'||s.opacity==='0')return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0;}
+function isVisible(el){if(!el||!el.isConnected)return false;const s=window.getComputedStyle(el);if(s.display==='none'||s.visibility==='hidden'||s.opacity==='0')return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0;}
 function numberKey(el){return[cleanNum(el.dataset.target,0,null),el.dataset.suffix||'',el.dataset.prefix||'',el.dataset.decimals||0].join('|');}
 function animateNumber(el){
     const target=cleanNum(el.dataset.target,0,null),suffix=el.dataset.suffix||'',prefix=el.dataset.prefix||'',decimals=el.dataset.decimals?parseInt(el.dataset.decimals,10):0,key=numberKey(el);
@@ -172,18 +254,18 @@ function animateProgress(el){
 function runFor(el){if(el.matches('.animate-number'))animateNumber(el);else if(el.matches('.gauge-semi-fill[data-target]'))animateGauge(el);else if(el.matches('.prog-fill[data-target]'))animateProgress(el);}
 const observed=new WeakSet(),io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting&&isVisible(e.target))runFor(e.target);});},{threshold:0.2});
 function register(){
-    rootDoc.querySelectorAll('.animate-number,.gauge-semi-fill[data-target],.prog-fill[data-target]').forEach(el=>{
+    document.querySelectorAll('.animate-number,.gauge-semi-fill[data-target],.prog-fill[data-target]').forEach(el=>{
         if(el.matches('.animate-number')){const k=numberKey(el);if(el.dataset.animKey&&el.dataset.animKey!==k)delete el.dataset.animKey;}
         else{const t=cleanNum(el.dataset.target,0,100);if(el.dataset.animKey&&el.dataset.animKey!==String(t))delete el.dataset.animKey;}
         if(!observed.has(el)){io.observe(el);observed.add(el);}
-        if(isVisible(el)){const r=el.getBoundingClientRect(),vh=rootDoc.defaultView?.innerHeight||900;if(r.top<vh*0.92&&r.bottom>0)runFor(el);}
+        if(isVisible(el)){const r=el.getBoundingClientRect(),vh=window.innerHeight||900;if(r.top<vh*0.92&&r.bottom>0)runFor(el);}
     });
 }
 setTimeout(register,60);
-let _t=null;new MutationObserver(()=>{if(_t)clearTimeout(_t);_t=setTimeout(()=>setTimeout(register,60),90);}).observe(rootDoc.body,{childList:true,subtree:true});
-rootDoc.addEventListener('click',evt=>{if(evt.target?.closest('[role="tab"]'))setTimeout(()=>setTimeout(register,60),120);},true);
+let _t=null;new MutationObserver(()=>{if(_t)clearTimeout(_t);_t=setTimeout(()=>setTimeout(register,60),90);}).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('click',evt=>{if(evt.target?.closest('[role="tab"]'))setTimeout(()=>setTimeout(register,60),120);},true);
 </script>
-""", height=0)
+""", unsafe_allow_javascript=True)
 
 
 # =============================================================================
@@ -253,7 +335,7 @@ def html_prog(label, pct, color, n=0) -> str:
     v = max(0.0, min(100.0, float(pct) if not pd.isna(pct) else 0.0))
     return f"""<div style="margin-bottom:1rem;">
     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-        <span style="font-size:0.78rem;color:#3B5878;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;">{label}</span>
+        <span style="font-size:0.78rem;color:var(--t2);font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;">{label}</span>
         <span style="font-size:0.82rem;font-weight:700;color:{color};font-family:'Plus Jakarta Sans',sans-serif;">{v:.0f}% ({int(n)})</span>
     </div>
     <div class="prog-track"><div class="prog-fill" style="background:{color};width:{v:.1f}%;" data-target="{v:.1f}"></div></div></div>"""
@@ -430,8 +512,8 @@ def render_sidebar(df_raw: pd.DataFrame, prefix: str = "sb") -> pd.DataFrame:
     with st.sidebar:
         st.markdown("""
         <div style="font-family:'Fraunces',serif;font-size:1.15rem;font-style:italic;
-                    color:#0F2340;font-weight:400;margin-bottom:1.2rem;padding-bottom:0.6rem;
-                    border-bottom:2px solid #E4F0FB;">Filtres</div>""", unsafe_allow_html=True)
+                    color:var(--t1);font-weight:400;margin-bottom:1.2rem;padding-bottom:0.6rem;
+                    border-bottom:2px solid var(--bd);">Filtres</div>""", unsafe_allow_html=True)
 
         ALL = "Tous"
 
@@ -468,7 +550,7 @@ def render_sidebar(df_raw: pd.DataFrame, prefix: str = "sb") -> pd.DataFrame:
             sel_age = st.slider("Tranche d'âge", min_value=ab[0], max_value=ab[1], value=safe_val, key=f"{prefix}_age")
 
         st.markdown("<hr>", unsafe_allow_html=True)
-        if st.button("↺ Réinitialiser", key=f"{prefix}_reset", use_container_width=True):
+        if st.button("↺ Réinitialiser", key=f"{prefix}_reset", width="stretch"):
             for k in [f"{prefix}_dir", f"{prefix}_csp", f"{prefix}_genre", f"{prefix}_age"]:
                 st.session_state.pop(k, None)
             st.rerun()
@@ -489,7 +571,7 @@ def render_sidebar(df_raw: pd.DataFrame, prefix: str = "sb") -> pd.DataFrame:
 
 
 # =============================================================================
-# EXPORT WORD BUTTON
+# EXPORT BUTTONS
 # =============================================================================
 
 def render_export_button(report_bytes: bytes, filename: str, label: str = "📄 Exporter le rapport Word"):
@@ -499,5 +581,46 @@ def render_export_button(report_bytes: bytes, filename: str, label: str = "📄 
         data=report_bytes,
         file_name=filename,
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        use_container_width=True,
+        width="stretch",
     )
+
+
+def render_export_header(prefix: str) -> str:
+    """
+    Affiche l'en-tête de la section Export dans la sidebar (séparateur + label + input organisation).
+    Doit être appelé dans un contexte `with st.sidebar:`.
+    Retourne le nom d'organisation saisi.
+    Le bouton Générer et la logique rapport restent dans chaque page.
+    """
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown(
+        '<span style="font-size:0.7rem;font-weight:700;color:var(--t3);'
+        'text-transform:uppercase;letter-spacing:0.08em;">Export</span>',
+        unsafe_allow_html=True,
+    )
+    return st.text_input("Organisation", value="Mon Organisation", key=f"{prefix}_company")
+
+
+def render_export_downloads(
+    report_key: str,
+    figures_key: str,
+    docx_filename: str,
+    zip_prefix: str,
+    company: str,
+):
+    """
+    Affiche les boutons de téléchargement Word + ZIP si le rapport est disponible.
+    Doit être appelé dans un contexte `with st.sidebar:`.
+    """
+    from pages._export_utils import render_zip_button
+
+    if report_key in st.session_state:
+        render_export_button(st.session_state[report_key], docx_filename)
+
+    if st.session_state.get(report_key) or st.session_state.get(figures_key):
+        render_zip_button(
+            docx_bytes=st.session_state.get(report_key),
+            figures=st.session_state.get(figures_key, {}),
+            prefix=zip_prefix,
+            company=company,
+        )

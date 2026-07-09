@@ -2,6 +2,7 @@
 lib/questionnaires/karasek/analytics.py
 Calcul des indicateurs agrégés Karasek pour le dashboard et le rapport.
 """
+from __future__ import annotations
 
 import re
 import numpy as np

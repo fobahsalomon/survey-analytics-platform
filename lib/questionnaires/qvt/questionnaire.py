@@ -72,7 +72,6 @@ class QVTQuestionnaire(BaseQuestionnaire):
         # simplifier le dashboard et les tableaux du rapport.
         for col, thresh in THRESHOLDS.items():
             if col in df_out.columns:
-                max_possible = col.replace("_score", "")
                 df_out[f"{col}_cat"] = np.where(
                     df_out[col].isna(), "Non renseigné",
                     np.where(df_out[col] < thresh * 0.6, "Insatisfaisant",

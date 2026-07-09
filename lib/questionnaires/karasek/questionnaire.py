@@ -88,13 +88,13 @@ class KarasekQuestionnaire(BaseQuestionnaire):
         ss_cols = [c for c in ["sup_score", "col_score"] if c in df_out.columns]
 
         if "Lat_score" not in df_out.columns or df_out["Lat_score"].isna().all():
-            df_out["Lat_score"] = sum(df_out[c] for c in comp_cols) if comp_cols else np.nan
+            df_out["Lat_score"] = df_out[comp_cols].sum(axis=1) if comp_cols else np.nan
 
         if "Dem_score" not in df_out.columns or df_out["Dem_score"].isna().all():
             df_out["Dem_score"] = df_out.get("dem_score", pd.Series(np.nan, index=df_out.index))
 
         if "SS_score" not in df_out.columns or df_out["SS_score"].isna().all():
-            df_out["SS_score"] = sum(df_out[c] for c in ss_cols) if ss_cols else np.nan
+            df_out["SS_score"] = df_out[ss_cols].sum(axis=1) if ss_cols else np.nan
 
         # 6. Scores RH
         # Ces scores supplémentaires enrichissent la lecture du climat

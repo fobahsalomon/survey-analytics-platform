@@ -32,13 +32,15 @@ if str(ROOT) not in sys.path:
 # La page pilote l'expérience utilisateur, mais les calculs restent dans `lib/`.
 from lib.questionnaires.karasek import KarasekQuestionnaire, KarasekReporting, KarasekVisualizations
 from lib.questionnaires.karasek.config import THRESHOLDS, KARASEK_COLORS, SCORE_LABELS, RH_SCORE_GROUPS
-from pages._export_utils import render_zip_button, build_zip
+from pages._export_utils import render_zip_button
 from lib.common.file_utils import load_dataframe
+from lib.common.common_cleaning import find_col_by_pattern
 from pages._ui_shared import (
     inject_css, inject_animation_js,
     section_title, svg_icon, html_kpi, html_gauge, html_prog,
     html_zone, html_ls_n, make_barplot, make_stacked, make_radar,
     _plotly_base, fig_to_png, render_sidebar, render_export_button,
+    render_export_header, render_export_downloads,
     _norm, _clean_opts,
 )
 
@@ -76,7 +78,7 @@ with _col_top:
         unsafe_allow_html=True,
     )
 with _col_back:
-    if st.button("← Accueil", key="back_home_k", use_container_width=True):
+    if st.button("← Accueil", key="back_home_k", width="stretch"):
         st.switch_page("app.py")
 
 # ─── UPLOAD ──────────────────────────────────────────────────────────────────
@@ -105,8 +107,8 @@ else:
 
 if st.session_state.get("_k_is_demo"):
     st.info(
-        f"Mode demo active: le fichier d'exemple `{st.session_state['_k_name']}` a ete charge automatiquement. "
-        "Importez votre propre fichier pour remplacer ces donnees."
+        f"Mode démo actif : le fichier d'exemple `{st.session_state['_k_name']}` a été chargé automatiquement. "
+        "Importez votre propre fichier pour remplacer ces données."
     )
 
 # ─── PIPELINE ────────────────────────────────────────────────────────────────
@@ -128,9 +130,10 @@ df = render_sidebar(df_scored, prefix="k")
 
 with st.sidebar:
     n_f = len(df)
-    st.markdown(f"""<div style="text-align:center;padding:0.7rem;background:#EDF5FD;border-radius:10px;margin-top:0.8rem;">
-    <span style="font-size:0.7rem;color:#6B88A8;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Effectif filtré</span><br>
-    <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.6rem;font-weight:800;color:#38A3E8;"
+    st.markdown(f"""<div style="text-align:center;padding:0.7rem;background:rgba(56,163,232,0.10);
+    border:1px solid rgba(56,163,232,0.2);border-radius:10px;margin-top:0.8rem;">
+    <span style="font-size:0.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Effectif filtré</span><br>
+    <span style="font-size:1.6rem;font-weight:800;color:#38A3E8;"
         class="animate-number" data-target="{n_f}">{n_f}</span>
     </div>""", unsafe_allow_html=True)
 
@@ -138,8 +141,6 @@ if len(df) == 0:
     st.warning("Aucun répondant ne correspond aux filtres sélectionnés.")
     st.stop()
 
-# À partir d'ici, on ne travaille plus sur des réponses brutes.
-# `metrics` contient déjà des résumés prêts à être affichés dans le dashboard.
 # ─── ANALYTICS ───────────────────────────────────────────────────────────────
 q_engine  = KarasekQuestionnaire()
 metrics   = q_engine.analytics(df)
@@ -150,23 +151,15 @@ stress    = metrics["stress_indicators"]
 strain    = metrics["strain_prevalence"]
 rh        = metrics["rh_scores"]
 
-# Les exports réutilisent les mêmes métriques que l'écran.
-# Cela évite d'avoir deux logiques métier différentes entre UI et rapport.
-# ─── EXPORT WORD + ZIP (sidebar) ────────────────────────────────────────────
+# ─── EXPORT (sidebar) ────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown(
-        '<span style="font-size:0.7rem;font-weight:700;color:#6B88A8;'
-        'text-transform:uppercase;letter-spacing:0.08em;">Export</span>',
-        unsafe_allow_html=True,
-    )
-    company = st.text_input("Nom organisation", value="Mon Organisation", key="k_company")
+    company = render_export_header(prefix="k")
 
-    if st.button("Générer rapport + visuels", key="k_gen_report", use_container_width=True):
+    if st.button("Générer rapport + visuels", key="k_gen_report", width="stretch"):
         with st.spinner("Génération des visualisations…"):
             try:
-                viz    = KarasekVisualizations(company=company)
-                figs   = viz.generate_all(df, metrics)
+                viz  = KarasekVisualizations(company=company)
+                figs = viz.generate_all(df, metrics)
                 st.session_state["_k_figures"] = figs
             except Exception as e:
                 st.warning(f"Visualisations partielles : {e}")
@@ -187,20 +180,10 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"Erreur rapport : {e}")
 
-    # Bouton Word seul
-    if "_k_report" in st.session_state:
-        render_export_button(st.session_state["_k_report"], "rapport_karasek.docx")
-
-    # Bouton ZIP (rapport + toutes les figures)
-    if "_k_report" in st.session_state or st.session_state.get("_k_figures"):
-        st.markdown("<br>", unsafe_allow_html=True)
-        render_zip_button(
-            docx_bytes=st.session_state.get("_k_report"),
-            figures=st.session_state.get("_k_figures", {}),
-            prefix="karasek",
-            company=company,
-            label="📦 Télécharger tout (ZIP)",
-        )
+    render_export_downloads(
+        report_key="_k_report", figures_key="_k_figures",
+        docx_filename="rapport_karasek.docx", zip_prefix="karasek", company=company,
+    )
 
 # ─── ONGLETS ─────────────────────────────────────────────────────────────────
 tab_gen, tab_quad, tab_cross = st.tabs(["Vue d'ensemble", "Stress & Quadrants", "Croisement"])
@@ -217,7 +200,6 @@ with tab_gen:
     n_women  = demo["women"]["n"]
     avg_age  = demo["avg_age"]
 
-    from lib.common.common_cleaning import find_col_by_pattern
     sit_col = find_col_by_pattern(list(df.columns), [r"situation.*matrimon"])
     if sit_col:
         sv = df[sit_col].value_counts(dropna=True)
@@ -278,7 +260,7 @@ with tab_gen:
         st.markdown('<p style="color:#4E6A88;font-size:0.98rem;margin:0.12rem 0 0.65rem;">% de collaborateurs avec un niveau élevé de satisfaction par dimension</p>', unsafe_allow_html=True)
         rc1, rc2 = st.columns([6, 4])
         with rc1:
-            st.plotly_chart(make_radar(dim_pcts, [d[1] for d in DIMS_ORG]), use_container_width=True, key="k_radar_gen")
+            st.plotly_chart(make_radar(dim_pcts, [d[1] for d in DIMS_ORG]), width="stretch", key="k_radar_gen")
         with rc2:
             st.markdown("<br><br>", unsafe_allow_html=True)
             bars_html = "".join(
@@ -357,7 +339,7 @@ with tab_quad:
                 yaxis_title="Demande psychologique (charge mentale)",
                 legend_title_text="Zone",
             )
-            st.plotly_chart(fig_sc, use_container_width=True, key="k_mapp_chart")
+            st.plotly_chart(fig_sc, width="stretch", key="k_mapp_chart")
         else:
             st.info("Données insuffisantes pour la grille MAPP.")
     else:
@@ -392,7 +374,7 @@ with tab_quad:
         png_hm = fig_to_png(fig_hm)
         if png_hm:
             st.download_button("⬇ Télécharger PNG", data=png_hm, file_name="heatmap_direction.png", mime="image/png", key="k_dl_hm")
-        st.pyplot(fig_hm, use_container_width=True)
+        st.pyplot(fig_hm, width="stretch")
         plt.close(fig_hm)
 
 
@@ -440,14 +422,14 @@ with tab_cross:
         if cross_col and cross_col in df.columns:
             fig_cr = make_stacked(df, real_col, cross_col)
             if fig_cr:
-                st.plotly_chart(fig_cr, use_container_width=True, key="k_cr_stacked")
+                st.plotly_chart(fig_cr, width="stretch", key="k_cr_stacked")
                 tmp = df[[real_col, cross_col]].dropna()
                 if not tmp.empty:
                     pct_tbl = pd.crosstab(tmp[real_col].astype(str), tmp[cross_col].astype(str), normalize="index").mul(100).round(1)
                     st.markdown("**Tableau de distribution (%)**")
-                    st.dataframe(pct_tbl.style.format("{:.1f}%"), use_container_width=True)
+                    st.dataframe(pct_tbl.style.format("{:.1f}%"), width="stretch")
                     with st.expander("Effectifs bruts"):
-                        st.dataframe(pd.crosstab(tmp[real_col].astype(str), tmp[cross_col].astype(str), margins=True, margins_name="Total"), use_container_width=True)
+                        st.dataframe(pd.crosstab(tmp[real_col].astype(str), tmp[cross_col].astype(str), margins=True, margins_name="Total"), width="stretch")
             else:
                 st.info("Données insuffisantes pour ce croisement.")
         else:
@@ -455,11 +437,11 @@ with tab_cross:
             with c_chart:
                 fig_bar = make_barplot(df, real_col)
                 if fig_bar:
-                    st.plotly_chart(fig_bar, use_container_width=True, key="k_cr_bar")
+                    st.plotly_chart(fig_bar, width="stretch", key="k_cr_bar")
             with c_table:
                 cnt = df[real_col].value_counts().reset_index()
                 cnt.columns = [sel_var, "N"]
                 cnt["%"] = (cnt["N"] / cnt["N"].sum() * 100).round(1)
-                st.dataframe(cnt, use_container_width=True, hide_index=True)
+                st.dataframe(cnt, width="stretch", hide_index=True)
     else:
         st.info("Sélectionnez une variable pour afficher le graphique.")
