@@ -70,30 +70,8 @@ def inject_css():
     }
 }
 
-/* ── Mode sombre — toggle Streamlit (défini par le JS ci-dessous) ───── */
-html[data-theme="dark"] {
-    --bg:        #0F172A;
-    --card:      #1E293B;
-    --sidebar:   #1A2744;
-    --t1:        #E2E8F0;
-    --t2:        #94A3B8;
-    --t3:        #64748B;
-    --t4:        #475569;
-    --bd:        #334155;
-    --bd2:       #475569;
-    --bd3:       #334155;
-    --sh:        rgba(0,0,0,0.35);
-    --sh-h:      rgba(56,163,232,0.22);
-    --prog:      #1E293B;
-    --hr:        #334155;
-    --input-bg:  #1E293B;
-    --tab-bg:    #1E293B;
-    --scroll-t:  #1E293B;
-    --scroll-th: #334155;
-}
-
 *, *::before, *::after { box-sizing: border-box; }
-html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--t1); }
+html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; }
 
 .stApp {
     background-color: var(--bg);
@@ -204,27 +182,9 @@ hr { border: none; border-top: 1px solid var(--hr); margin: 1rem 0; }
 
 
 def inject_animation_js():
-    """Injecte le JavaScript qui anime les KPI, jauges et barres de progression, et détecte le thème Streamlit."""
+    """Injecte le JavaScript qui anime les KPI, jauges et barres de progression."""
     st.html("""
 <script>
-/* ── Détection du thème Streamlit ─────────────────────────────────── */
-function syncTheme() {
-    try {
-        const app = document.querySelector('[data-testid="stAppViewContainer"]') || document.body;
-        const bg  = window.getComputedStyle(app).backgroundColor;
-        const m   = bg.match(/([0-9]+),[ ]*([0-9]+),[ ]*([0-9]+)/);
-        if (m) {
-            const lum = 0.299*+m[1] + 0.587*+m[2] + 0.114*+m[3];
-            if (lum < 100) document.documentElement.setAttribute('data-theme', 'dark');
-            else           document.documentElement.removeAttribute('data-theme');
-        }
-    } catch(e) {}
-}
-syncTheme();
-new MutationObserver(syncTheme).observe(document.body, {
-    childList: true, subtree: true, attributes: true, attributeFilter: ['class','style']
-});
-
 /* ── Animations KPI / jauges / barres ────────────────────────────── */
 function easeOut(t) { return 1 - Math.pow(1-t,3); }
 function cleanNum(v,min,max){var n=parseFloat(v);if(!isFinite(n))n=0;if(typeof min==='number')n=Math.max(min,n);if(typeof max==='number')n=Math.min(max,n);return n;}
