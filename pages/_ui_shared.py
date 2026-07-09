@@ -46,7 +46,7 @@ def inject_css():
     --scroll-th:  #AAD5F5;
 }
 
-/* ── Mode sombre — préférence système ───────────────────────────────── */
+/* ── Mode sombre — repli avant détection JS (préférence système) ─────── */
 @media (prefers-color-scheme: dark) {
     :root {
         --bg:        #0F172A;
@@ -68,6 +68,54 @@ def inject_css():
         --scroll-t:  #1E293B;
         --scroll-th: #334155;
     }
+}
+
+/* ── Thème réellement actif dans Streamlit (piloté par le JS ci-dessous) ──
+   prefers-color-scheme reflète l'OS, pas le thème que l'utilisateur a choisi
+   dans le menu ⋮ > Settings de Streamlit. Si les deux divergent (OS sombre +
+   thème Streamlit "Clair", ou l'inverse), les règles ci-dessus se trompent.
+   Le JS mesure la couleur de fond réellement appliquée par Streamlit et pose
+   data-theme sur <html> ; ces règles, plus spécifiques que la media query
+   ci-dessus, ont alors le dernier mot. */
+html[data-theme="light"] {
+    --bg:         #F0F7FF;
+    --card:       #FFFFFF;
+    --sidebar:    #FFFFFF;
+    --t1:         #0F2340;
+    --t2:         #4E6A88;
+    --t3:         #6B88A8;
+    --t4:         #94A3B8;
+    --bd:         #D6E8F7;
+    --bd2:        #AAD5F5;
+    --bd3:        #C8DFF2;
+    --sh:         rgba(56,163,232,0.06);
+    --sh-h:       rgba(56,163,232,0.15);
+    --prog:       #EDF5FD;
+    --hr:         #E4F0FB;
+    --input-bg:   #FFFFFF;
+    --tab-bg:     #FFFFFF;
+    --scroll-t:   #EDF5FD;
+    --scroll-th:  #AAD5F5;
+}
+html[data-theme="dark"] {
+    --bg:        #0F172A;
+    --card:      #1E293B;
+    --sidebar:   #1A2744;
+    --t1:        #E2E8F0;
+    --t2:        #94A3B8;
+    --t3:        #64748B;
+    --t4:        #475569;
+    --bd:        #334155;
+    --bd2:       #475569;
+    --bd3:       #334155;
+    --sh:        rgba(0,0,0,0.35);
+    --sh-h:      rgba(56,163,232,0.22);
+    --prog:      #1E293B;
+    --hr:        #334155;
+    --input-bg:  #1E293B;
+    --tab-bg:    #1E293B;
+    --scroll-t:  #1E293B;
+    --scroll-th: #334155;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -215,6 +263,28 @@ def inject_animation_js():
     """Injecte le JavaScript qui anime les KPI, jauges et barres de progression."""
     st.html("""
 <script>
+/* Détection du thème Streamlit réellement actif : Streamlit choisit son
+   propre thème (menu Settings, ou système), qui peut différer de la
+   préférence OS. On mesure la couleur de fond appliquée au body (jamais
+   touchée par notre CSS) et on la reporte comme attribut data-theme sur
+   l'élément racine, pour que notre palette suive le thème effectif. */
+function detectStreamlitTheme(){
+    const bg = window.getComputedStyle(document.body).backgroundColor;
+    const m = bg.match(/(\\d+),\\s*(\\d+),\\s*(\\d+)/);
+    if(!m) return;
+    const lum = 0.299*+m[1] + 0.587*+m[2] + 0.114*+m[3];
+    const theme = lum < 128 ? 'dark' : 'light';
+    if(document.documentElement.getAttribute('data-theme') !== theme){
+        document.documentElement.setAttribute('data-theme', theme);
+    }
+}
+detectStreamlitTheme();
+setTimeout(detectStreamlitTheme, 300);
+setTimeout(detectStreamlitTheme, 1000);
+if(window.matchMedia){
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => setTimeout(detectStreamlitTheme, 80));
+}
+
 /* ── Animations KPI / jauges / barres ────────────────────────────── */
 function easeOut(t) { return 1 - Math.pow(1-t,3); }
 function cleanNum(v,min,max){var n=parseFloat(v);if(!isFinite(n))n=0;if(typeof min==='number')n=Math.max(min,n);if(typeof max==='number')n=Math.min(max,n);return n;}
@@ -226,7 +296,7 @@ function animateNumber(el){
     const duration=700,start=performance.now();
     (function step(now){const t=Math.min(1,(now-start)/duration),cur=Math.max(0,target*easeOut(t));
     el.textContent=prefix+(decimals===0?Math.round(cur):cur.toFixed(decimals))+suffix;
-    if(t<1)requestAnimationFrame(step);else el.textContent=prefix+(decimals===0?Math.round(target):target.toFixed(decimals))+suffix;})(start);
+    if(t < 1)requestAnimationFrame(step);else el.textContent=prefix+(decimals===0?Math.round(target):target.toFixed(decimals))+suffix;})(start);
 }
 function animateGauge(fill){
     const target=cleanNum(fill.dataset.target,0,100),key=String(target);
@@ -234,7 +304,7 @@ function animateGauge(fill){
     const counter=fill.closest('.gauge-card')?.querySelector('.gauge-counter'),duration=800,start=performance.now();
     fill.style.setProperty('--g','0deg');
     requestAnimationFrame(()=>setTimeout(()=>fill.style.setProperty('--g',(target*1.8).toFixed(1)+'deg'),60));
-    if(counter){(function step(now){const t=Math.min(1,(now-start)/duration);counter.textContent=Math.round(target*easeOut(t));if(t<1)requestAnimationFrame(step);else counter.textContent=Math.round(target);})(start);}
+    if(counter){(function step(now){const t=Math.min(1,(now-start)/duration);counter.textContent=Math.round(target*easeOut(t));if(t < 1)requestAnimationFrame(step);else counter.textContent=Math.round(target);})(start);}
 }
 function animateProgress(el){
     const target=cleanNum(el.dataset.target,0,100),key=String(target);
@@ -248,11 +318,11 @@ function register(){
         if(el.matches('.animate-number')){const k=numberKey(el);if(el.dataset.animKey&&el.dataset.animKey!==k)delete el.dataset.animKey;}
         else{const t=cleanNum(el.dataset.target,0,100);if(el.dataset.animKey&&el.dataset.animKey!==String(t))delete el.dataset.animKey;}
         if(!observed.has(el)){io.observe(el);observed.add(el);}
-        if(isVisible(el)){const r=el.getBoundingClientRect(),vh=window.innerHeight||900;if(r.top<vh*0.92&&r.bottom>0)runFor(el);}
+        if(isVisible(el)){const r=el.getBoundingClientRect(),vh=window.innerHeight||900;if(vh*0.92>r.top&&r.bottom>0)runFor(el);}
     });
 }
 setTimeout(register,60);
-let _t=null;new MutationObserver(()=>{if(_t)clearTimeout(_t);_t=setTimeout(()=>setTimeout(register,60),90);}).observe(document.body,{childList:true,subtree:true});
+let _t=null;new MutationObserver(()=>{if(_t)clearTimeout(_t);_t=setTimeout(()=>setTimeout(()=>{detectStreamlitTheme();register();},60),90);}).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('click',evt=>{if(evt.target?.closest('[role="tab"]'))setTimeout(()=>setTimeout(register,60),120);},true);
 </script>
 """, unsafe_allow_javascript=True)
