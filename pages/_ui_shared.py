@@ -83,6 +83,36 @@ html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; }
 
 [data-testid="stSidebar"] { background: var(--sidebar) !important; border-right: 1px solid var(--bd) !important; }
 
+/* ── Chrome natif Streamlit (header, menu, nav multipage) ─────────────────
+   Streamlit choisit ses propres couleurs de texte selon SON thème interne
+   (réglable indépendamment dans le menu ⋮ > Settings, ou "system"), qui peut
+   diverger de la palette ci-dessus pilotée par prefers-color-scheme. Sans ces
+   règles, le texte de nav peut hériter d'une couleur sombre sur fond sombre
+   (ou claire sur fond clair) et devenir illisible. On force donc ces éléments
+   natifs à suivre nos variables, quel que soit le thème choisi côté Streamlit. */
+[data-testid="stHeader"] { background: var(--bg) !important; box-shadow: none !important; }
+[data-testid="stHeader"] svg { fill: var(--t2) !important; }
+[data-testid="stToolbarActions"] button, [data-testid="stMainMenu"] { color: var(--t1) !important; }
+
+[data-testid="stSidebarNav"] a, [data-testid="stSidebarNav"] span,
+[data-testid="stSidebarNav"] li { color: var(--t1) !important; }
+[data-testid="stSidebarNav"] a:hover { background: var(--prog) !important; border-radius: 8px; }
+[data-testid="stSidebarNav"] a[aria-current="page"] { background: var(--prog) !important; border-radius: 8px; }
+[data-testid="stSidebarCollapsedControl"] svg, [data-testid="stSidebarCollapseButton"] svg { fill: var(--t1) !important; }
+
+[data-testid="stSidebar"] label, [data-testid="stSidebar"] p { color: var(--t1) !important; }
+[data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li { color: var(--t1); }
+
+/* Boutons secondaires natifs (ex. "Browse files" de l'uploader, boutons de
+   téléchargement) : même souci que la nav, ils prennent la couleur du thème
+   Streamlit natif au lieu de suivre notre palette. */
+[data-testid="stBaseButton-secondary"], button[kind="secondary"] {
+    background: var(--card) !important; color: var(--t1) !important;
+    border: 1px solid var(--bd2) !important;
+}
+[data-testid="stFileUploaderDropzone"] { background: var(--input-bg) !important; }
+[data-testid="stFileUploaderDropzone"] * { color: var(--t1) !important; }
+
 /* ── Titres de section ───────────────────────────────────────────────── */
 .section-title {
     display: flex; align-items: center; gap: 0.7rem; font-family: 'Fraunces', serif;
